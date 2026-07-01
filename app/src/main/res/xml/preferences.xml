@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/pref_category_keyboard">
+
+        <ListPreference
+            android:key="theme"
+            android:title="@string/pref_theme"
+            android:entries="@array/theme_entries"
+            android:entryValues="@array/theme_values"
+            android:defaultValue="dark_hermetic" />
+
+        <SwitchPreferenceCompat
+            android:key="vibration"
+            android:title="@string/pref_vibration"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="sound"
+            android:title="@string/pref_sound"
+            android:defaultValue="false" />
+
+        <SwitchPreferenceCompat
+            android:key="key_borders"
+            android:title="@string/pref_key_borders"
+            android:defaultValue="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_category_hermetic">
+
+        <SwitchPreferenceCompat
+            android:key="show_meaning"
+            android:title="@string/pref_show_meaning"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="show_gematria"
+            android:title="@string/pref_show_gematria"
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="hebrew_hints"
+            android:title="@string/pref_hebrew_hints"
+            android:defaultValue="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hermetic Keyboard</string>
+    <string name="settings_title">Hermetic Keyboard Settings</string>
+
+    <!-- Subtypes -->
+    <string name="subtype_en">English</string>
+    <string name="subtype_pt_br">Português (Brasil)</string>
+    <string name="subtype_es">Español</string>
+    <string name="subtype_hebrew_transliterated">Hebrew (Transliterated)</string>
+
+    <!-- Panel -->
+    <string name="panel_hermetic">Hermetic Symbols</string>
+    <string name="panel_hebrew">Aleph Beit</string>
+    <string name="search_hint">Search symbols…</string>
+    <string name="tab_recents">Recents</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_planets">Planets</string>
+    <string name="tab_zodiac">Zodiac</string>
+    <string name="tab_elements">Elements</string>
+    <string name="tab_alchemy">Alchemy</string>
+    <string name="tab_hebrew">Aleph Beit</string>
+    <string name="tab_egyptian">Egyptian</string>
+    <string name="tab_esoteric">Esoteric</string>
+
+    <!-- Settings -->
+    <string name="pref_category_keyboard">Keyboard</string>
+    <string name="pref_category_hermetic">Hermetic Symbols</string>
+    <string name="pref_theme">Theme</string>
+    <string name="pref_vibration">Vibration on keypress</string>
+    <string name="pref_sound">Sound on keypress</string>
+    <string name="pref_show_meaning">Show meaning on long-press</string>
+    <string name="pref_show_gematria">Show gematria values</string>
+    <string name="pref_hebrew_hints">Show Hebrew character hints</string>
+    <string name="pref_key_borders">Show key borders</string>
+
+    <!-- Tooltip -->
+    <string name="tooltip_meaning">Meaning:</string>
+    <string name="tooltip_gematria">Gematria:</string>
+    <string name="tooltip_tradition">Tradition:</string>
+    <string name="tooltip_add_favorite">Add to favorites</string>
+    <string name="tooltip_remove_favorite">Remove from favorites</string>
+</resources>

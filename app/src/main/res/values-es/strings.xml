@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Teclado Hermético</string>
+    <string name="settings_title">Configuración del Teclado Hermético</string>
+    <string name="subtype_en">Inglés</string>
+    <string name="subtype_pt_br">Portugués (Brasil)</string>
+    <string name="subtype_es">Español</string>
+    <string name="subtype_hebrew_transliterated">Hebreo (Transliterado)</string>
+    <string name="panel_hermetic">Símbolos Herméticos</string>
+    <string name="panel_hebrew">Aleph Beit</string>
+    <string name="search_hint">Buscar símbolos…</string>
+    <string name="tab_recents">Recientes</string>
+    <string name="tab_favorites">Favoritos</string>
+    <string name="tab_planets">Planetas</string>
+    <string name="tab_zodiac">Zodíaco</string>
+    <string name="tab_elements">Elementos</string>
+    <string name="tab_alchemy">Alquimia</string>
+    <string name="tab_hebrew">Aleph Beit</string>
+    <string name="tab_egyptian">Egipcio</string>
+    <string name="tab_esoteric">Esotérico</string>
+    <string name="pref_category_keyboard">Teclado</string>
+    <string name="pref_category_hermetic">Símbolos Herméticos</string>
+    <string name="pref_theme">Tema</string>
+    <string name="pref_vibration">Vibración al pulsar</string>
+    <string name="pref_sound">Sonido al pulsar</string>
+    <string name="pref_show_meaning">Mostrar significado al mantener</string>
+    <string name="pref_show_gematria">Mostrar valores de gematria</string>
+    <string name="pref_hebrew_hints">Mostrar carácter hebreo en la tecla</string>
+    <string name="pref_key_borders">Mostrar bordes de teclas</string>
+    <string name="tooltip_meaning">Significado:</string>
+    <string name="tooltip_gematria">Gematria:</string>
+    <string name="tooltip_tradition">Tradición:</string>
+    <string name="tooltip_add_favorite">Añadir a favoritos</string>
+    <string name="tooltip_remove_favorite">Quitar de favoritos</string>
+</resources>

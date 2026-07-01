@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="theme_entries">
+        <item>Dark Hermetic</item>
+        <item>Light Hermetic</item>
+        <item>AMOLED Black</item>
+        <item>Classic</item>
+    </string-array>
+
+    <string-array name="theme_values">
+        <item>dark_hermetic</item>
+        <item>light_hermetic</item>
+        <item>amoled_black</item>
+        <item>classic</item>
+    </string-array>
+</resources>

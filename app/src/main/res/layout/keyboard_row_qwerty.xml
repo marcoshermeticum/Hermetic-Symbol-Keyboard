@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder for QWERTY rows - to be expanded with full key definitions -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <!-- This will be replaced by programmatic key generation
+         based on the current language/subtype -->
+    <TextView
+        android:id="@+id/keyboard_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:gravity="center"
+        android:text="QWERTY Keyboard\n(Layout generated programmatically)"
+        android:textColor="@color/on_surface"
+        android:textSize="12sp" />
+
+</LinearLayout>

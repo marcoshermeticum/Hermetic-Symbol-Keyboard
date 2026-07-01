@@ -1,0 +1,135 @@
+{
+  "categories": [
+    {
+      "id": "planets",
+      "name": "Planetary Symbols",
+      "icon": "☉",
+      "description": "Symbols of the classical and modern planets",
+      "symbols": [
+        {"name": "Sun", "symbol": "☉", "unicode": "U+2609", "keywords": ["sun", "gold", "life", "consciousness"], "meaning": "Source of life, divine consciousness, the Self.", "tradition": ["Alchemy", "Hermeticism", "Astrology"]},
+        {"name": "Moon", "symbol": "☽", "unicode": "U+263D", "keywords": ["moon", "silver", "intuition", "dreams"], "meaning": "Intuition, emotions, subconscious mind, cycles.", "tradition": ["Alchemy", "Astrology"]},
+        {"name": "Mercury", "symbol": "☿", "unicode": "U+263F", "keywords": ["mercury", "communication", "mind", "quicksilver"], "meaning": "Intellect, communication, alchemical mercury.", "tradition": ["Hermeticism", "Alchemy", "Astrology"]},
+        {"name": "Venus", "symbol": "♀", "unicode": "U+2640", "keywords": ["venus", "love", "beauty", "copper"], "meaning": "Attraction, beauty, harmony, copper.", "tradition": ["Alchemy", "Astrology"]},
+        {"name": "Mars", "symbol": "♂", "unicode": "U+2642", "keywords": ["mars", "iron", "strength", "action"], "meaning": "Action, courage, determination, iron.", "tradition": ["Alchemy", "Astrology"]},
+        {"name": "Jupiter", "symbol": "♃", "unicode": "U+2643", "keywords": ["jupiter", "tin", "expansion", "wisdom"], "meaning": "Abundance, wisdom, prosperity, tin.", "tradition": ["Hermeticism", "Astrology"]},
+        {"name": "Saturn", "symbol": "♄", "unicode": "U+2644", "keywords": ["saturn", "lead", "discipline", "time"], "meaning": "Limitation, structure, maturity, lead.", "tradition": ["Hermeticism", "Astrology"]},
+        {"name": "Uranus", "symbol": "♅", "unicode": "U+2645", "keywords": ["uranus", "innovation", "awakening"], "meaning": "Sudden change, revolution, higher mind.", "tradition": ["Modern Astrology"]},
+        {"name": "Neptune", "symbol": "♆", "unicode": "U+2646", "keywords": ["neptune", "mysticism", "dreams"], "meaning": "Transcendence, illusion, imagination.", "tradition": ["Modern Astrology"]},
+        {"name": "Pluto", "symbol": "♇", "unicode": "U+2647", "keywords": ["pluto", "death", "rebirth", "power"], "meaning": "Profound transformation, death, rebirth.", "tradition": ["Modern Astrology"]}
+      ]
+    },
+    {
+      "id": "zodiac",
+      "name": "Zodiac Signs",
+      "icon": "♈",
+      "description": "The twelve signs of the zodiac",
+      "symbols": [
+        {"name": "Aries", "symbol": "♈", "unicode": "U+2648", "keywords": ["aries", "fire", "initiative", "mars"], "meaning": "Initiative, courage, cardinal fire."},
+        {"name": "Taurus", "symbol": "♉", "unicode": "U+2649", "keywords": ["taurus", "earth", "stability", "venus"], "meaning": "Stability, persistence, fixed earth."},
+        {"name": "Gemini", "symbol": "♊", "unicode": "U+264A", "keywords": ["gemini", "air", "communication", "mercury"], "meaning": "Communication, duality, mutable air."},
+        {"name": "Cancer", "symbol": "♋", "unicode": "U+264B", "keywords": ["cancer", "water", "emotion", "moon"], "meaning": "Emotion, nurturing, cardinal water."},
+        {"name": "Leo", "symbol": "♌", "unicode": "U+264C", "keywords": ["leo", "fire", "leadership", "sun"], "meaning": "Leadership, creativity, fixed fire."},
+        {"name": "Virgo", "symbol": "♍", "unicode": "U+264D", "keywords": ["virgo", "earth", "analysis", "mercury"], "meaning": "Analysis, service, mutable earth."},
+        {"name": "Libra", "symbol": "♎", "unicode": "U+264E", "keywords": ["libra", "air", "balance", "venus"], "meaning": "Balance, harmony, cardinal air."},
+        {"name": "Scorpio", "symbol": "♏", "unicode": "U+264F", "keywords": ["scorpio", "water", "transformation", "pluto"], "meaning": "Transformation, mystery, fixed water."},
+        {"name": "Sagittarius", "symbol": "♐", "unicode": "U+2650", "keywords": ["sagittarius", "fire", "exploration", "jupiter"], "meaning": "Exploration, philosophy, mutable fire."},
+        {"name": "Capricorn", "symbol": "♑", "unicode": "U+2651", "keywords": ["capricorn", "earth", "discipline", "saturn"], "meaning": "Discipline, ambition, cardinal earth."},
+        {"name": "Aquarius", "symbol": "♒", "unicode": "U+2652", "keywords": ["aquarius", "air", "innovation", "uranus"], "meaning": "Innovation, freedom, fixed air."},
+        {"name": "Pisces", "symbol": "♓", "unicode": "U+2653", "keywords": ["pisces", "water", "compassion", "neptune"], "meaning": "Compassion, transcendence, mutable water."}
+      ]
+    },
+    {
+      "id": "elements",
+      "name": "Classical Elements",
+      "icon": "🜂",
+      "description": "The four classical alchemical elements",
+      "symbols": [
+        {"name": "Fire", "symbol": "🜂", "unicode": "U+1F702", "keywords": ["fire", "south", "action", "will"], "meaning": "Energy, will, passion, purification."},
+        {"name": "Air", "symbol": "🜁", "unicode": "U+1F701", "keywords": ["air", "east", "thought", "mind"], "meaning": "Mind, communication, intellect."},
+        {"name": "Earth", "symbol": "🜃", "unicode": "U+1F703", "keywords": ["earth", "north", "material", "body"], "meaning": "Stability, manifestation, grounding."},
+        {"name": "Water", "symbol": "🜄", "unicode": "U+1F704", "keywords": ["water", "west", "flow", "emotion"], "meaning": "Emotion, intuition, healing."}
+      ]
+    },
+    {
+      "id": "alchemy",
+      "name": "Alchemical Symbols",
+      "icon": "🜍",
+      "description": "Symbols used in alchemical processes and substances",
+      "symbols": [
+        {"name": "Salt", "symbol": "🜔", "unicode": "U+1F714", "keywords": ["salt", "body", "crystallization"], "meaning": "Body, crystallization, material form."},
+        {"name": "Sulfur", "symbol": "🜍", "unicode": "U+1F70D", "keywords": ["sulfur", "soul", "active"], "meaning": "Soul, active principle, combustibility."},
+        {"name": "Mercury Principle", "symbol": "☿", "unicode": "U+263F", "keywords": ["mercury", "spirit", "mediator"], "meaning": "Spirit, mediator between salt and sulfur."},
+        {"name": "Antimony", "symbol": "🜪", "unicode": "U+1F72A", "keywords": ["antimony", "transformation", "purification"], "meaning": "Transformation and purification."}
+      ]
+    },
+    {
+      "id": "egyptian",
+      "name": "Egyptian Symbols",
+      "icon": "☥",
+      "description": "Ancient Egyptian symbols with Unicode representation",
+      "symbols": [
+        {"name": "Ankh", "symbol": "☥", "unicode": "U+2625", "keywords": ["ankh", "life", "immortality", "egypt"], "meaning": "Life, immortality, divine knowledge."}
+      ]
+    },
+    {
+      "id": "hebrew",
+      "name": "Aleph Beit",
+      "icon": "א",
+      "description": "The 22 letters of the Hebrew alphabet plus 5 final forms (sofit)",
+      "symbols": [
+        {"name": "Aleph", "symbol": "א", "unicode": "U+05D0", "keywords": ["aleph", "air", "spirit", "1"], "meaning": "Ox, breath, spirit. Element: Air.", "value": 1},
+        {"name": "Bet", "symbol": "ב", "unicode": "U+05D1", "keywords": ["bet", "house", "creation", "2"], "meaning": "House, duality, creation.", "value": 2},
+        {"name": "Gimel", "symbol": "ג", "unicode": "U+05D2", "keywords": ["gimel", "camel", "movement", "3"], "meaning": "Camel, movement, generosity.", "value": 3},
+        {"name": "Dalet", "symbol": "ד", "unicode": "U+05D3", "keywords": ["dalet", "door", "pathway", "4"], "meaning": "Door, pathway, humility.", "value": 4},
+        {"name": "He", "symbol": "ה", "unicode": "U+05D4", "keywords": ["he", "window", "breath", "5"], "meaning": "Window, breath of God, revelation.", "value": 5},
+        {"name": "Vav", "symbol": "ו", "unicode": "U+05D5", "keywords": ["vav", "nail", "hook", "6"], "meaning": "Nail/hook, connection, binding.", "value": 6},
+        {"name": "Zayin", "symbol": "ז", "unicode": "U+05D6", "keywords": ["zayin", "sword", "weapon", "7"], "meaning": "Sword/weapon, discernment.", "value": 7},
+        {"name": "Chet", "symbol": "ח", "unicode": "U+05D7", "keywords": ["chet", "fence", "life", "8"], "meaning": "Fence, enclosure, life force.", "value": 8},
+        {"name": "Tet", "symbol": "ט", "unicode": "U+05D8", "keywords": ["tet", "serpent", "good", "9"], "meaning": "Serpent, hidden good.", "value": 9},
+        {"name": "Yod", "symbol": "י", "unicode": "U+05D9", "keywords": ["yod", "hand", "spark", "10"], "meaning": "Hand, divine spark, creation point.", "value": 10},
+        {"name": "Kaf", "symbol": "כ", "unicode": "U+05DB", "keywords": ["kaf", "palm", "crown", "20"], "meaning": "Palm of hand, crown, containment.", "value": 20},
+        {"name": "Lamed", "symbol": "ל", "unicode": "U+05DC", "keywords": ["lamed", "goad", "teaching", "30"], "meaning": "Ox goad, teaching, aspiration.", "value": 30},
+        {"name": "Mem", "symbol": "מ", "unicode": "U+05DE", "keywords": ["mem", "water", "revealed", "40"], "meaning": "Water, the revealed and concealed.", "value": 40},
+        {"name": "Nun", "symbol": "נ", "unicode": "U+05E0", "keywords": ["nun", "fish", "soul", "50"], "meaning": "Fish, soul, faithfulness.", "value": 50},
+        {"name": "Samekh", "symbol": "ס", "unicode": "U+05E1", "keywords": ["samekh", "support", "protection", "60"], "meaning": "Support, protection, cyclical.", "value": 60},
+        {"name": "Ayin", "symbol": "ע", "unicode": "U+05E2", "keywords": ["ayin", "eye", "perception", "70"], "meaning": "Eye, perception, insight.", "value": 70},
+        {"name": "Pe", "symbol": "פ", "unicode": "U+05E4", "keywords": ["pe", "mouth", "speech", "80"], "meaning": "Mouth, speech, expression.", "value": 80},
+        {"name": "Tsade", "symbol": "צ", "unicode": "U+05E6", "keywords": ["tsade", "fishhook", "righteousness", "90"], "meaning": "Fishhook, righteousness, the just.", "value": 90},
+        {"name": "Qof", "symbol": "ק", "unicode": "U+05E7", "keywords": ["qof", "head", "holiness", "100"], "meaning": "Back of head, holiness.", "value": 100},
+        {"name": "Resh", "symbol": "ר", "unicode": "U+05E8", "keywords": ["resh", "head", "beginning", "200"], "meaning": "Head, beginning.", "value": 200},
+        {"name": "Shin", "symbol": "ש", "unicode": "U+05E9", "keywords": ["shin", "fire", "tooth", "300"], "meaning": "Tooth, fire, divine power, trinity.", "value": 300},
+        {"name": "Tav", "symbol": "ת", "unicode": "U+05EA", "keywords": ["tav", "mark", "truth", "400"], "meaning": "Cross/mark, truth, completion.", "value": 400},
+        {"name": "Kaf Sofit", "symbol": "ך", "unicode": "U+05DA", "keywords": ["kaf", "sofit", "final", "500"], "meaning": "Final form of Kaf.", "value": 500},
+        {"name": "Mem Sofit", "symbol": "ם", "unicode": "U+05DD", "keywords": ["mem", "sofit", "final", "600"], "meaning": "Final form of Mem — closed, sealed.", "value": 600},
+        {"name": "Nun Sofit", "symbol": "ן", "unicode": "U+05DF", "keywords": ["nun", "sofit", "final", "700"], "meaning": "Final form of Nun.", "value": 700},
+        {"name": "Pe Sofit", "symbol": "ף", "unicode": "U+05E3", "keywords": ["pe", "sofit", "final", "800"], "meaning": "Final form of Pe.", "value": 800},
+        {"name": "Tsade Sofit", "symbol": "ץ", "unicode": "U+05E5", "keywords": ["tsade", "sofit", "final", "900"], "meaning": "Final form of Tsade.", "value": 900}
+      ]
+    },
+    {
+      "id": "misc_esoteric",
+      "name": "Miscellaneous Esoteric",
+      "icon": "✡",
+      "description": "Other Unicode symbols relevant to esotericism",
+      "symbols": [
+        {"name": "Star of David", "symbol": "✡", "unicode": "U+2721", "keywords": ["hexagram", "star", "david", "solomon"], "meaning": "Union of opposites, as above so below."},
+        {"name": "Caduceus", "symbol": "☤", "unicode": "U+2624", "keywords": ["caduceus", "hermes", "mercury", "healing"], "meaning": "Hermes' staff, duality in balance."},
+        {"name": "Staff of Asclepius", "symbol": "⚕", "unicode": "U+2695", "keywords": ["asclepius", "healing", "medicine"], "meaning": "Healing and medicine."},
+        {"name": "Atom / Spirit", "symbol": "⚛", "unicode": "U+269B", "keywords": ["atom", "spirit", "energy"], "meaning": "Atomic structure, spiritual energy."},
+        {"name": "Yin Yang", "symbol": "☯", "unicode": "U+262F", "keywords": ["yin", "yang", "balance", "tao"], "meaning": "Balance of opposites, Tao."},
+        {"name": "Vesta", "symbol": "⚶", "unicode": "U+26B6", "keywords": ["vesta", "hearth", "sacred fire"], "meaning": "Sacred flame, devotion."},
+        {"name": "Chiron", "symbol": "⚷", "unicode": "U+26B7", "keywords": ["chiron", "healer", "wound"], "meaning": "The wounded healer."},
+        {"name": "Lilith", "symbol": "⚸", "unicode": "U+26B8", "keywords": ["lilith", "black moon", "shadow"], "meaning": "Dark feminine, shadow self."},
+        {"name": "Ascending Node", "symbol": "☊", "unicode": "U+260A", "keywords": ["node", "ascending", "north", "destiny"], "meaning": "Karmic direction, destiny."},
+        {"name": "Descending Node", "symbol": "☋", "unicode": "U+260B", "keywords": ["node", "descending", "south", "past"], "meaning": "Past life, release."},
+        {"name": "Circled Plus", "symbol": "⊕", "unicode": "U+2295", "keywords": ["earth", "circle", "cross", "matter"], "meaning": "Earth symbol, spirit in matter."},
+        {"name": "Infinity", "symbol": "∞", "unicode": "U+221E", "keywords": ["infinity", "ouroboros", "eternal"], "meaning": "Eternal cycle, ouroboros."},
+        {"name": "Triangle Up", "symbol": "△", "unicode": "U+25B3", "keywords": ["triangle", "fire", "upward", "masculine"], "meaning": "Fire element, masculine principle."},
+        {"name": "Triangle Down", "symbol": "▽", "unicode": "U+25BD", "keywords": ["triangle", "water", "downward", "feminine"], "meaning": "Water element, feminine principle."},
+        {"name": "Pentagram", "symbol": "⛤", "unicode": "U+26E4", "keywords": ["pentagram", "five", "elements", "protection"], "meaning": "Five elements, protection."},
+        {"name": "Inverted Pentagram", "symbol": "⛧", "unicode": "U+26E7", "keywords": ["pentagram", "inverted", "matter", "descent"], "meaning": "Spirit descended into matter."},
+        {"name": "Hexagon", "symbol": "⬡", "unicode": "U+2B21", "keywords": ["hexagon", "geometry", "structure"], "meaning": "Sacred geometry, natural structure."}
+      ]
+    }
+  ]
+}

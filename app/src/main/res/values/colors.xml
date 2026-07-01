@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Colors -->
+    <color name="primary">#4C2062</color>
+    <color name="primary_dark">#271F0E</color>
+    <color name="background">#090908</color>
+    <color name="primary_light">#6E3A8A</color>
+    <color name="accent">#8B45B0</color>
+    <color name="surface">#1A1519</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_background">#E8E0EC</color>
+    <color name="on_surface">#D4C8DA</color>
+
+    <!-- Keyboard specific -->
+    <color name="key_background">#1E1424</color>
+    <color name="key_background_pressed">#4C2062</color>
+    <color name="key_text">#E8E0EC</color>
+    <color name="key_border">#3A2548</color>
+    <color name="suggestion_bar">#140E18</color>
+    <color name="category_selected">#4C2062</color>
+    <color name="category_unselected">#271F0E</color>
+
+    <!-- Theme: AMOLED Black -->
+    <color name="amoled_background">#000000</color>
+    <color name="amoled_surface">#0A0A0A</color>
+    <color name="amoled_key_background">#111111</color>
+</resources>

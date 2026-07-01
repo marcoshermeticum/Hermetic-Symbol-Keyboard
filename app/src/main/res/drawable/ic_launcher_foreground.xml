@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder Mercury symbol (☿) as app icon foreground -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Circle -->
+    <path
+        android:pathData="M54,36m-14,0a14,14 0,1 1,28 0a14,14 0,1 1,-28 0"
+        android:strokeWidth="3"
+        android:strokeColor="#4C2062"
+        android:fillColor="#00000000" />
+    <!-- Vertical line -->
+    <path
+        android:pathData="M54,50L54,72"
+        android:strokeWidth="3"
+        android:strokeColor="#4C2062" />
+    <!-- Cross -->
+    <path
+        android:pathData="M46,64L62,64"
+        android:strokeWidth="3"
+        android:strokeColor="#4C2062" />
+    <!-- Crescent -->
+    <path
+        android:pathData="M42,26 Q54,18 66,26"
+        android:strokeWidth="3"
+        android:strokeColor="#8B45B0"
+        android:fillColor="#00000000" />
+</vector>
