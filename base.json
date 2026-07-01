@@ -1,0 +1,527 @@
+{
+  "project": {
+    "name": "Hermetic Symbol Keyboard",
+    "codename": "HermeticKB",
+    "version": "1.0.0-alpha",
+    "description": "Teclado Android baseado no OpenBoard com suporte a símbolos herméticos, alquímicos, astrológicos e esotéricos em Unicode.",
+    "license": "Apache-2.0",
+    "repository": "fork de https://github.com/openboard-team/openboard",
+    "platforms": {
+      "current": "Android 11+ (API 30+)",
+      "future": ["iOS (planejado)"],
+      "test_device": "Samsung Galaxy A30s SM-A307GT",
+      "compatibility": "Qualquer dispositivo Android com qualquer resolução de tela"
+    }
+  },
+
+  "architecture": {
+    "base": "OpenBoard (fork)",
+    "language": "Kotlin + Java (manter base existente do OpenBoard)",
+    "build_system": "Gradle",
+    "min_sdk": 30,
+    "target_sdk": 34,
+    "ui_approach": "Layouts XML responsivos com dimensões em dp/sp para adaptação a qualquer resolução",
+    "future_ios_considerations": "Manter lógica de símbolos/categorias em módulo separado (JSON/data layer) para reutilização futura em iOS"
+  },
+
+  "branding": {
+    "description": "Identidade visual padrão da aplicação. Variações e tons derivados podem ser gerados a partir das cores base para compor a UI.",
+    "colors": {
+      "primary": "#4C2062",
+      "primary_dark": "#271F0E",
+      "background": "#090908",
+      "primary_light": "#6E3A8A",
+      "accent": "#8B45B0",
+      "surface": "#1A1519",
+      "on_primary": "#FFFFFF",
+      "on_background": "#E8E0EC",
+      "on_surface": "#D4C8DA",
+      "key_background": "#1E1424",
+      "key_text": "#E8E0EC",
+      "key_border": "#3A2548",
+      "suggestion_bar": "#140E18",
+      "category_selected": "#4C2062",
+      "category_unselected": "#271F0E"
+    },
+    "color_generation_notes": "A paleta pode ser expandida gerando variações (lighter/darker) a partir das 3 cores base: #271F0E (terra escuro), #4C2062 (roxo hermético), #090908 (quase-preto). Usar HSL shifts de ±10-20% para criar hierarquia visual. Os temas alternativos (Light, AMOLED, Classic) terão suas próprias paletas derivadas.",
+    "typography": {
+      "primary_font": "System default (Roboto)",
+      "symbol_font": "Noto Sans Symbols 2 (embarcada como fallback)",
+      "hebrew_font": "Noto Sans Hebrew ou Frank Ruhl Libre (para legibilidade das letras hebraicas)"
+    },
+    "icon": {
+      "concept": "Símbolo de Mercúrio (☿) estilizado ou Hexagrama com as cores da paleta",
+      "shape": "Adaptive icon (Android 8+) com background #090908 e foreground em #4C2062"
+    }
+  },
+
+  "features": {
+    "core_keyboard": {
+      "description": "Funcionalidade completa de teclado QWERTY herdada do OpenBoard",
+      "multi_language": {
+        "enabled": true,
+        "default_languages": ["en", "pt-BR", "es", "fr", "de", "it"],
+        "language_switching": "Tecla de alternância no teclado ou long-press na barra de espaço",
+        "autocorrect": true,
+        "suggestions": true
+      },
+      "themes": {
+        "default": "Dark Hermetic",
+        "options": ["Dark Hermetic", "Light Hermetic", "AMOLED Black", "Classic"]
+      }
+    },
+
+    "emoji_panel": {
+      "description": "Painel de emojis padrão do OpenBoard mantido e funcional",
+      "access": "Tecla dedicada ou long-press na tecla de vírgula"
+    },
+
+    "special_characters_panel": {
+      "description": "Painel de caracteres especiais expandido",
+      "access": "Tecla ?123 (padrão do OpenBoard) com categorias adicionais"
+    },
+
+    "hermetic_symbols_panel": {
+      "description": "Painel dedicado para símbolos herméticos/alquímicos/esotéricos",
+      "access": "Tecla dedicada com ícone de pentagrama/hexagrama ou via long-press em tecla configurável",
+      "layout": "Grid responsivo com scroll horizontal por categoria e vertical por símbolos",
+      "search": "Busca por nome ou keyword dentro do painel",
+      "recents": "Seção de símbolos recentemente usados",
+      "favorites": "Possibilidade de marcar símbolos como favoritos"
+    },
+
+    "hebrew_transliterated_keyboard": {
+      "description": "Layout de teclado completo onde cada tecla mostra o nome transliterado da letra hebraica (em caracteres latinos), mas ao pressionar insere o caractere hebraico literal no campo de texto.",
+      "access": "Opção de layout selecionável via tecla de alternância de idioma (globe key) ou nas configurações como idioma/layout adicional",
+      "behavior": "Tecla exibe label em inglês (ex: 'Aleph'), ao tocar insere o caractere Unicode hebraico (ex: 'א')",
+      "use_case": "Permite que usuários não familiarizados com o layout físico hebraico possam digitar em hebraico reconhecendo as letras pelo nome transliterado. Útil para estudo de Kabbalah, gematria, e escrita ritual.",
+      "layout_rows": {
+        "description": "Distribuição sugerida em 4 fileiras (estilo QWERTY), adaptável a qualquer resolução",
+        "row_1": [
+          {"label": "Qof", "output": "ק"},
+          {"label": "Resh", "output": "ר"},
+          {"label": "Aleph", "output": "א"},
+          {"label": "Tet", "output": "ט"},
+          {"label": "Vav", "output": "ו"},
+          {"label": "Nun*", "output": "ן", "note": "Nun Sofit (final)"},
+          {"label": "Mem*", "output": "ם", "note": "Mem Sofit (final)"},
+          {"label": "Pe", "output": "פ"}
+        ],
+        "row_2": [
+          {"label": "Shin", "output": "ש"},
+          {"label": "Dalet", "output": "ד"},
+          {"label": "Gimel", "output": "ג"},
+          {"label": "Kaf", "output": "כ"},
+          {"label": "Ayin", "output": "ע"},
+          {"label": "Yod", "output": "י"},
+          {"label": "Chet", "output": "ח"},
+          {"label": "Lamed", "output": "ל"},
+          {"label": "Kaf*", "output": "ך", "note": "Kaf Sofit (final)"},
+          {"label": "Pe*", "output": "ף", "note": "Pe Sofit (final)"}
+        ],
+        "row_3": [
+          {"label": "Zayin", "output": "ז"},
+          {"label": "Samekh", "output": "ס"},
+          {"label": "Bet", "output": "ב"},
+          {"label": "He", "output": "ה"},
+          {"label": "Nun", "output": "נ"},
+          {"label": "Mem", "output": "מ"},
+          {"label": "Tsade", "output": "צ"},
+          {"label": "Tsade*", "output": "ץ", "note": "Tsade Sofit (final)"},
+          {"label": "Tav", "output": "ת"}
+        ],
+        "row_4": [
+          {"label": "⌫", "output": "BACKSPACE", "note": "Tecla de apagar"},
+          {"label": "🔮", "output": "SWITCH_TO_HERMETIC", "note": "Vai para painel de símbolos herméticos"},
+          {"label": "SPACE", "output": " ", "note": "Barra de espaço"},
+          {"label": "↵", "output": "ENTER", "note": "Enter/Return"},
+          {"label": "ABC", "output": "SWITCH_TO_ALPHA", "note": "Volta para layout QWERTY padrão"}
+        ]
+      },
+      "long_press_behavior": "Long-press em qualquer tecla mostra tooltip com: nome completo, caractere hebraico aumentado, valor de gematria",
+      "visual_style": {
+        "key_label_font_size": "12sp (nome transliterado)",
+        "key_hint_size": "8sp (caractere hebraico pequeno no canto da tecla como hint)",
+        "key_shape": "Retangular com bordas arredondadas, usando cores do branding"
+      },
+      "settings_options": [
+        "Mostrar hint (caractere hebraico) no canto da tecla (on/off)",
+        "Mostrar valor de gematria no outro canto (on/off)",
+        "Tamanho da fonte das labels (small/medium/large)"
+      ]
+    }
+  },
+
+  "symbol_categories": [
+    {
+      "id": "recents",
+      "name": "Recentes",
+      "icon": "🕐",
+      "description": "Símbolos usados recentemente (máximo 30)",
+      "dynamic": true
+    },
+    {
+      "id": "favorites",
+      "name": "Favoritos",
+      "icon": "⭐",
+      "description": "Símbolos marcados como favoritos pelo usuário",
+      "dynamic": true
+    },
+    {
+      "id": "planets",
+      "name": "Planetary Symbols",
+      "icon": "☉",
+      "symbol_count": 10,
+      "symbols": ["☉", "☽", "☿", "♀", "♂", "♃", "♄", "♅", "♆", "♇"]
+    },
+    {
+      "id": "zodiac",
+      "name": "Zodiac Signs",
+      "icon": "♈",
+      "symbol_count": 12,
+      "symbols": ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"]
+    },
+    {
+      "id": "elements",
+      "name": "Classical Elements",
+      "icon": "🜂",
+      "symbol_count": 4,
+      "symbols": ["🜂", "🜄", "🜁", "🜃"]
+    },
+    {
+      "id": "alchemy",
+      "name": "Alchemical Symbols",
+      "icon": "🜍",
+      "symbol_count": 5,
+      "symbols": ["🜔", "🜍", "☿", "🜪"],
+      "notes": "Inclui apenas símbolos com representação Unicode válida. Philosopher's Stone e Vitriol não possuem codepoint dedicado."
+    },
+    {
+      "id": "egyptian",
+      "name": "Egyptian Symbols",
+      "icon": "☥",
+      "symbol_count": 1,
+      "symbols": ["☥"],
+      "notes": "Apenas o Ankh possui codepoint Unicode dedicado. Os demais (Eye of Horus, Djed, Scarab) requerem imagens customizadas ou fontes especiais — fora do escopo v1.0."
+    },
+    {
+      "id": "hebrew_alephbet",
+      "name": "Aleph Beit (Hebrew Alphabet)",
+      "icon": "א",
+      "description": "Todas as 22 letras do alfabeto hebraico + 5 formas finais (sofit). Essenciais para Kabbalah, gematria e estudos herméticos.",
+      "symbol_count": 27,
+      "symbols": [
+        {"symbol": "א", "name": "Aleph", "unicode": "U+05D0", "value": 1, "meaning": "Ox, breath, spirit. Element: Air.", "keywords": ["aleph", "1", "air", "spirit", "fool"]},
+        {"symbol": "ב", "name": "Bet", "unicode": "U+05D1", "value": 2, "meaning": "House, duality, creation.", "keywords": ["bet", "2", "house", "magician"]},
+        {"symbol": "ג", "name": "Gimel", "unicode": "U+05D2", "value": 3, "meaning": "Camel, movement, generosity.", "keywords": ["gimel", "3", "camel", "priestess"]},
+        {"symbol": "ד", "name": "Dalet", "unicode": "U+05D3", "value": 4, "meaning": "Door, pathway, humility.", "keywords": ["dalet", "4", "door", "empress"]},
+        {"symbol": "ה", "name": "He", "unicode": "U+05D4", "value": 5, "meaning": "Window, breath of God, revelation.", "keywords": ["he", "5", "window", "emperor"]},
+        {"symbol": "ו", "name": "Vav", "unicode": "U+05D5", "value": 6, "meaning": "Nail/hook, connection, binding.", "keywords": ["vav", "6", "nail", "hierophant"]},
+        {"symbol": "ז", "name": "Zayin", "unicode": "U+05D6", "value": 7, "meaning": "Sword/weapon, discernment.", "keywords": ["zayin", "7", "sword", "lovers"]},
+        {"symbol": "ח", "name": "Chet", "unicode": "U+05D7", "value": 8, "meaning": "Fence, enclosure, life force.", "keywords": ["chet", "8", "fence", "chariot"]},
+        {"symbol": "ט", "name": "Tet", "unicode": "U+05D8", "value": 9, "meaning": "Serpent, hidden good.", "keywords": ["tet", "9", "serpent", "strength"]},
+        {"symbol": "י", "name": "Yod", "unicode": "U+05D9", "value": 10, "meaning": "Hand, divine spark, creation point.", "keywords": ["yod", "10", "hand", "hermit"]},
+        {"symbol": "כ", "name": "Kaf", "unicode": "U+05DB", "value": 20, "meaning": "Palm of hand, crown, containment.", "keywords": ["kaf", "20", "palm", "wheel"]},
+        {"symbol": "ל", "name": "Lamed", "unicode": "U+05DC", "value": 30, "meaning": "Ox goad, teaching, aspiration.", "keywords": ["lamed", "30", "goad", "justice"]},
+        {"symbol": "מ", "name": "Mem", "unicode": "U+05DE", "value": 40, "meaning": "Water, the revealed and concealed.", "keywords": ["mem", "40", "water", "hanged"]},
+        {"symbol": "נ", "name": "Nun", "unicode": "U+05E0", "value": 50, "meaning": "Fish, soul, faithfulness.", "keywords": ["nun", "50", "fish", "death"]},
+        {"symbol": "ס", "name": "Samekh", "unicode": "U+05E1", "value": 60, "meaning": "Support, protection, cyclical.", "keywords": ["samekh", "60", "support", "temperance"]},
+        {"symbol": "ע", "name": "Ayin", "unicode": "U+05E2", "value": 70, "meaning": "Eye, perception, insight.", "keywords": ["ayin", "70", "eye", "devil"]},
+        {"symbol": "פ", "name": "Pe", "unicode": "U+05E4", "value": 80, "meaning": "Mouth, speech, expression.", "keywords": ["pe", "80", "mouth", "tower"]},
+        {"symbol": "צ", "name": "Tsade", "unicode": "U+05E6", "value": 90, "meaning": "Fishhook, righteousness, the just.", "keywords": ["tsade", "90", "hook", "star"]},
+        {"symbol": "ק", "name": "Qof", "unicode": "U+05E7", "value": 100, "meaning": "Back of head, holiness, monkey.", "keywords": ["qof", "100", "head", "moon"]},
+        {"symbol": "ר", "name": "Resh", "unicode": "U+05E8", "value": 200, "meaning": "Head, beginning, poverty.", "keywords": ["resh", "200", "head", "sun"]},
+        {"symbol": "ש", "name": "Shin", "unicode": "U+05E9", "value": 300, "meaning": "Tooth, fire, divine power, trinity.", "keywords": ["shin", "300", "fire", "judgement"]},
+        {"symbol": "ת", "name": "Tav", "unicode": "U+05EA", "value": 400, "meaning": "Cross/mark, truth, completion.", "keywords": ["tav", "400", "mark", "world"]},
+        {"symbol": "ך", "name": "Kaf Sofit (final)", "unicode": "U+05DA", "value": 500, "meaning": "Final form of Kaf.", "keywords": ["kaf sofit", "500", "final"]},
+        {"symbol": "ם", "name": "Mem Sofit (final)", "unicode": "U+05DD", "value": 600, "meaning": "Final form of Mem — closed, sealed.", "keywords": ["mem sofit", "600", "final"]},
+        {"symbol": "ן", "name": "Nun Sofit (final)", "unicode": "U+05DF", "value": 700, "meaning": "Final form of Nun.", "keywords": ["nun sofit", "700", "final"]},
+        {"symbol": "ף", "name": "Pe Sofit (final)", "unicode": "U+05E3", "value": 800, "meaning": "Final form of Pe.", "keywords": ["pe sofit", "800", "final"]},
+        {"symbol": "ץ", "name": "Tsade Sofit (final)", "unicode": "U+05E5", "value": 900, "meaning": "Final form of Tsade.", "keywords": ["tsade sofit", "900", "final"]}
+      ]
+    },
+    {
+      "id": "misc_esoteric",
+      "name": "Miscellaneous Esoteric",
+      "icon": "✡",
+      "description": "Outros símbolos Unicode relevantes ao esoterismo",
+      "symbols": [
+        {"symbol": "✡", "name": "Star of David / Hexagram", "unicode": "U+2721"},
+        {"symbol": "☤", "name": "Caduceus", "unicode": "U+2624"},
+        {"symbol": "⚕", "name": "Staff of Asclepius", "unicode": "U+2695"},
+        {"symbol": "⚛", "name": "Atom / Spirit", "unicode": "U+269B"},
+        {"symbol": "☯", "name": "Yin Yang", "unicode": "U+262F"},
+        {"symbol": "⚶", "name": "Vesta", "unicode": "U+26B6"},
+        {"symbol": "⚷", "name": "Chiron", "unicode": "U+26B7"},
+        {"symbol": "⚸", "name": "Lilith / Black Moon", "unicode": "U+26B8"},
+        {"symbol": "☊", "name": "Ascending Node", "unicode": "U+260A"},
+        {"symbol": "☋", "name": "Descending Node", "unicode": "U+260B"},
+        {"symbol": "⊕", "name": "Circled Plus / Earth", "unicode": "U+2295"},
+        {"symbol": "⊗", "name": "Circled X", "unicode": "U+2297"},
+        {"symbol": "∞", "name": "Infinity / Ouroboros", "unicode": "U+221E"},
+        {"symbol": "△", "name": "Triangle (Fire upward)", "unicode": "U+25B3"},
+        {"symbol": "▽", "name": "Triangle (Water downward)", "unicode": "U+25BD"},
+        {"symbol": "⬡", "name": "Hexagon", "unicode": "U+2B21"},
+        {"symbol": "⍟", "name": "Pentagram variant", "unicode": "U+235F"},
+        {"symbol": "⛤", "name": "Pentagram", "unicode": "U+26E4"},
+        {"symbol": "⛥", "name": "Right-handed Pentagram", "unicode": "U+26E5"},
+        {"symbol": "⛦", "name": "Left-handed Pentagram", "unicode": "U+26E6"},
+        {"symbol": "⛧", "name": "Inverted Pentagram", "unicode": "U+26E7"},
+        {"symbol": "🝐", "name": "Alchemical Symbol for Powder", "unicode": "U+1F750"},
+        {"symbol": "🝑", "name": "Alchemical Symbol forIte", "unicode": "U+1F751"},
+        {"symbol": "🝒", "name": "Alchemical Symbol for Calx", "unicode": "U+1F752"},
+        {"symbol": "🝓", "name": "Alchemical Symbol forIte (variant)", "unicode": "U+1F753"}
+      ]
+    }
+  ],
+
+  "ui_design": {
+    "hermetic_panel": {
+      "layout": "BottomSheet ou painel inline (mesmo estilo do painel de emoji)",
+      "category_bar": "Barra horizontal no topo com ícones das categorias, scroll horizontal",
+      "symbol_grid": {
+        "columns": "auto (adaptável à largura da tela, mínimo 6, máximo 10)",
+        "cell_size": "48dp x 48dp",
+        "font_size": "22sp",
+        "long_press_action": "Mostra tooltip com nome e significado do símbolo + opção de favoritar"
+      },
+      "search_bar": {
+        "position": "Topo do painel, acima das categorias",
+        "placeholder": "Search symbols...",
+        "search_fields": ["name", "keywords", "meaning"]
+      }
+    },
+    "responsiveness": {
+      "strategy": "ConstraintLayout + dimensões em dp/sp + qualifiers para diferentes densidades",
+      "orientations": ["portrait", "landscape"],
+      "min_width": "320dp",
+      "tested_resolutions": "HD (720p), FHD (1080p), QHD (1440p), variados aspect ratios"
+    }
+  },
+
+  "data_layer": {
+    "description": "Camada de dados dos símbolos separada para reutilização cross-platform",
+    "format": "JSON embarcado no app + Room Database para favoritos/recentes",
+    "symbol_schema": {
+      "id": "string (unique)",
+      "category_id": "string",
+      "name": "string",
+      "symbol": "string (unicode character)",
+      "unicode": "string (codepoint)",
+      "keywords": "string[] (para busca)",
+      "meaning": "string (descrição curta)",
+      "tradition": "string[] (opcional)"
+    },
+    "persistence": {
+      "recents": "Room DB, máximo 30, FIFO",
+      "favorites": "Room DB, sem limite",
+      "settings": "SharedPreferences"
+    }
+  },
+
+  "settings": {
+    "keyboard_settings": [
+      "Idioma do teclado (multi-select)",
+      "Tema (Dark Hermetic / Light / AMOLED / Classic)",
+      "Vibração ao toque (on/off)",
+      "Som ao toque (on/off)",
+      "Altura do teclado (slider)",
+      "Mostrar borda das teclas (on/off)"
+    ],
+    "hermetic_settings": [
+      "Categorias visíveis (toggle por categoria)",
+      "Ordenação das categorias (drag to reorder)",
+      "Mostrar significado no long-press (on/off)",
+      "Limpar recentes",
+      "Exportar/Importar favoritos"
+    ]
+  },
+
+  "testing": {
+    "description": "Testes automatizados em múltiplas camadas para garantir qualidade e estabilidade.",
+    "unit_tests": {
+      "framework": "JUnit 5 + Mockito/MockK",
+      "coverage_target": "80% mínimo na data layer e lógica de negócio",
+      "scope": [
+        "SymbolRepository — busca, filtragem, ordenação",
+        "FavoritesManager — adicionar, remover, persistência",
+        "RecentsManager — FIFO, limite de 30",
+        "SearchEngine — busca por nome, keywords, significado",
+        "GematriaCalculator — valores numéricos das letras hebraicas (se implementado)"
+      ]
+    },
+    "integration_tests": {
+      "framework": "AndroidX Test + Room in-memory DB",
+      "scope": [
+        "Room Database — CRUD de favoritos e recentes",
+        "SharedPreferences — persistência de configurações",
+        "SymbolDataProvider — carregamento do JSON de símbolos"
+      ]
+    },
+    "ui_tests": {
+      "framework": "Espresso + UI Automator",
+      "scope": [
+        "Abertura do painel hermético via tecla dedicada",
+        "Navegação entre categorias de símbolos",
+        "Inserção de símbolo no campo de texto",
+        "Long-press mostra tooltip com informações",
+        "Busca de símbolo por nome/keyword",
+        "Troca de idioma do teclado",
+        "Alternância entre temas"
+      ]
+    },
+    "screenshot_tests": {
+      "framework": "Paparazzi ou Shot (Karumi)",
+      "scope": "Regressão visual do teclado em diferentes resoluções e temas"
+    },
+    "performance_tests": {
+      "scope": [
+        "Tempo de abertura do painel hermético (< 200ms)",
+        "Tempo de busca de símbolos (< 100ms para 200+ símbolos)",
+        "Consumo de memória do teclado em uso contínuo"
+      ]
+    }
+  },
+
+  "ci_cd": {
+    "description": "Pipeline de integração contínua e entrega contínua.",
+    "platform": "GitHub Actions",
+    "pipelines": {
+      "pull_request": {
+        "triggers": ["push to any branch", "pull_request to main"],
+        "steps": [
+          "Checkout do código",
+          "Setup JDK 17",
+          "Cache de dependências Gradle",
+          "Lint (ktlint + Android Lint)",
+          "Compilação (assembleDebug)",
+          "Testes unitários (testDebugUnitTest)",
+          "Testes de integração (connectedDebugAndroidTest em emulador)",
+          "Upload de relatórios de cobertura (Jacoco)",
+          "Upload de APK debug como artifact"
+        ]
+      },
+      "release": {
+        "triggers": ["tag v*"],
+        "steps": [
+          "Checkout do código",
+          "Setup JDK 17",
+          "Compilação release (assembleRelease)",
+          "Assinatura do APK (keystore via GitHub Secrets)",
+          "Testes unitários",
+          "Testes instrumentados em emulador",
+          "Geração de changelog automático",
+          "Criação de GitHub Release com APK anexado",
+          "Upload do APK como artifact"
+        ]
+      },
+      "nightly": {
+        "triggers": ["cron: '0 3 * * *' (03:00 UTC diariamente)"],
+        "steps": [
+          "Build completo",
+          "Testes completos (unit + instrumented)",
+          "Screenshot tests em múltiplas resoluções",
+          "Relatório de cobertura",
+          "Notificação em caso de falha"
+        ]
+      }
+    },
+    "quality_gates": {
+      "min_coverage": "80%",
+      "lint_errors": "0 (zero tolerance)",
+      "lint_warnings": "Permitidos com justificativa (suppress annotation)",
+      "all_tests_passing": true
+    },
+    "secrets_required": [
+      "KEYSTORE_FILE (base64 encoded)",
+      "KEYSTORE_PASSWORD",
+      "KEY_ALIAS",
+      "KEY_PASSWORD"
+    ]
+  },
+
+  "build_and_release": {
+    "signing": "Keystore dedicada para release",
+    "build_variants": ["debug", "release"],
+    "proguard": true,
+    "output": "APK (não AAB, para instalação direta sem Play Store inicialmente)",
+    "apk_name_pattern": "hermetic-keyboard-v{version}-{variant}.apk"
+  },
+
+  "implementation_phases": [
+    {
+      "phase": 1,
+      "name": "Fork & Base Setup",
+      "tasks": [
+        "Fork do OpenBoard",
+        "Atualizar Gradle/AGP para versões compatíveis com API 34",
+        "Configurar minSdk 30, targetSdk 34",
+        "Compilar e testar build base no dispositivo",
+        "Renomear app (package, nome, ícone placeholder)",
+        "Revisar, Verificar, avisar e instalar dependencias necessárias restantes"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Symbol Data Layer",
+      "tasks": [
+        "Criar módulo/pacote de dados dos símbolos",
+        "Implementar JSON com todos os símbolos Unicode válidos",
+        "Implementar Room DB para recentes e favoritos",
+        "Criar repositório/provider de símbolos"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Hermetic Panel UI",
+      "tasks": [
+        "Criar layout do painel hermético (grid + categorias)",
+        "Implementar navegação por categorias",
+        "Implementar inserção de símbolo ao toque",
+        "Implementar long-press com tooltip",
+        "Implementar busca",
+        "Adicionar tecla de acesso ao painel no teclado principal"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Multi-language & Polish",
+      "tasks": [
+        "Garantir suporte multi-idioma funcional",
+        "Implementar temas (Dark Hermetic como padrão)",
+        "Tela de configurações",
+        "Testes em múltiplas resoluções",
+        "Otimização de performance"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Release",
+      "tasks": [
+        "Gerar APK assinado",
+        "Testar no Samsung Galaxy A30s",
+        "Testar em emuladores com diferentes resoluções",
+        "Documentação básica (README)"
+      ]
+    }
+  ],
+
+  "excluded_from_v1": {
+    "reason": "Símbolos sem codepoint Unicode dedicado ou que requerem fonte customizada",
+    "items": [
+      "Sacred Geometry (Flower of Life, Seed of Life, Metatron's Cube, Merkaba, Sri Yantra, Vesica Piscis)",
+      "Egyptian (Eye of Horus, Eye of Ra, Djed, Scarab)",
+      "Kabbalah (Tree of Life, Sephiroth individuais)",
+      "Thelema (Unicursal Hexagram, Star Sapphire, Mark of the Beast, Hadit, Nuit, Ra-Hoor-Khuit)",
+      "Alchemy (Philosopher's Stone, Vitriol)"
+    ],
+    "future_approach": "Fonte customizada (OTF/TTF) com glifos em Private Use Area do Unicode, ou renderização via SVG/Canvas"
+  },
+
+  "notes": [
+    "O OpenBoard original é GPL-3.0. Verificar compatibilidade de licença ao fazer o fork.",
+    "Símbolos do bloco Unicode Alchemical Symbols (U+1F700–U+1F77F) podem não renderizar em todas as fontes do sistema. Considerar embutir fonte Noto Sans Symbols 2 como fallback.",
+    "Para iOS futuro: a data layer em JSON puro pode ser compartilhada. A UI precisará ser reimplementada nativamente (Swift/SwiftUI).",
+    "O Galaxy A30s tem display 720x1560 (HD+). Garantir que o grid de símbolos funcione bem nessa resolução."
+  ]
+}
