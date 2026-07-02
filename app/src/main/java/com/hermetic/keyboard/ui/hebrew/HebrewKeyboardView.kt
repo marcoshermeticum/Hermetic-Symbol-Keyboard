@@ -56,7 +56,7 @@ class HebrewKeyboardView(
         val keyWidth = if (key.isSpecialKey) dpToPx(56) else dpToPx(42)
         val keyHeight = dpToPx(48)
 
-        return TextView(context).apply {
+        val tv = TextView(context).apply {
             text = key.label
             gravity = Gravity.CENTER
             setTextColor(ContextCompat.getColor(context, R.color.key_text))
@@ -66,27 +66,30 @@ class HebrewKeyboardView(
                 marginStart = dpToPx(2)
                 marginEnd = dpToPx(2)
             }
+            isFocusable = false
+            isClickable = true
+        }
 
-            // Show Hebrew character as hint in top-right corner if not a special key
-            if (!key.isSpecialKey && key.output.length == 1) {
-                // Could use compound drawables or paint overlay for the hint
-                // For now, the label already conveys the intent
+        // Backspace gets long-press repeat
+        if (key.output == "BACKSPACE") {
+            com.hermetic.keyboard.ui.BackspaceHelper.attach(tv) {
+                onKeyPress("BACKSPACE")
             }
-
-            setOnClickListener {
-                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        } else {
+            tv.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                 onKeyPress(key.output)
             }
-
-            setOnLongClickListener {
+            tv.setOnLongClickListener {
                 if (!key.isSpecialKey) {
-                    // Show tooltip with full info
                     val info = "${key.hebrewName} (${key.output}) — Gematria: ${key.gematriaValue}"
                     Toast.makeText(context, info, Toast.LENGTH_SHORT).show()
                 }
                 true
             }
         }
+
+        return tv
     }
 
     private fun dpToPx(dp: Int): Int {

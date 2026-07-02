@@ -104,26 +104,56 @@ class SuggestionBarView(
 
     /**
      * Suggestions filtered by what the user is currently typing.
+     * Includes fuzzy matching for typos and incomplete words.
      */
     private fun getPrefixSuggestions(prefix: String): List<String> {
         val normalized = prefix.lowercase()
         val lastWord = wordHistory.lastOrNull()
 
-        // Contextual: filter predicted words by prefix
+        // 1. Contextual: filter predicted words by prefix
         val contextual = if (lastWord != null) {
             val predicted = (BIGRAM_MODEL[lastWord] ?: emptyList()) +
                     (getLearnedNextWords(lastWord))
             predicted.filter { it.startsWith(normalized) }.take(2)
         } else emptyList()
 
-        // Dictionary matches sorted by user frequency
-        val dictMatches = WORDS.filter { it.startsWith(normalized) && it != normalized && it !in contextual }
-        val scored = dictMatches.map { it to getWordFrequency(it) }
+        // 2. Exact prefix matches from dictionary (sorted by user frequency)
+        val exactMatches = WORDS.filter { it.startsWith(normalized) && it != normalized }
+            .map { it to getWordFrequency(it) }
             .sortedByDescending { it.second }
             .map { it.first }
-            .take(3 - contextual.size)
 
-        return (contextual + scored).distinct().take(3)
+        // 3. Fuzzy/typo correction: find words with small edit distance
+        val fuzzyMatches = if (normalized.length >= 3) {
+            WORDS.filter { it != normalized && it.length in (normalized.length - 1)..(normalized.length + 2) }
+                .map { it to editDistance(normalized, it) }
+                .filter { it.second <= 2 } // max 2 edits
+                .sortedBy { it.second }
+                .map { it.first }
+                .filter { it !in exactMatches }
+                .take(3)
+        } else emptyList()
+
+        // Combine: contextual first, then exact prefix, then fuzzy corrections
+        return (contextual + exactMatches + fuzzyMatches)
+            .distinct()
+            .take(3)
+    }
+
+    /**
+     * Levenshtein edit distance for typo detection.
+     */
+    private fun editDistance(a: String, b: String): Int {
+        val dp = Array(a.length + 1) { IntArray(b.length + 1) }
+        for (i in 0..a.length) dp[i][0] = i
+        for (j in 0..b.length) dp[0][j] = j
+        for (i in 1..a.length) {
+            for (j in 1..b.length) {
+                val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+                dp[i][j] = minOf(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost)
+            }
+        }
+        return dp[a.length][b.length]
     }
 
     // --- User learning ---
@@ -237,42 +267,62 @@ class SuggestionBarView(
             "tem que" to listOf("ser", "fazer", "ter", "ir")
         )
 
-        /** Base dictionary for prefix matching */
+        /** Base dictionary for prefix matching and typo correction */
         private val WORDS = listOf(
+            // Artigos, preposições, conjunções
             "que", "não", "para", "com", "uma", "por", "mais", "como", "mas", "foi",
             "quando", "muito", "depois", "sobre", "também", "entre", "desde", "então",
             "porque", "ainda", "antes", "onde", "apenas", "algum", "alguma", "alguém",
+            "porém", "pois", "embora", "enquanto", "portanto", "contudo", "todavia",
+            // Verbos
             "ser", "estar", "ter", "fazer", "poder", "dizer", "dar", "ver", "saber",
             "querer", "chegar", "passar", "dever", "ficar", "deixar", "começar",
             "parecer", "viver", "achar", "pensar", "trabalhar", "conhecer", "falar",
             "olhar", "sentir", "ouvir", "pedir", "lembrar", "precisar", "gostar",
             "acreditar", "acontecer", "escrever", "perder", "encontrar", "receber",
             "entender", "seguir", "conseguir", "criar", "ajudar", "tentar",
+            "mandar", "enviar", "responder", "ligar", "comprar", "vender", "abrir",
+            "fechar", "correr", "andar", "comer", "beber", "dormir", "acordar",
+            // Substantivos comuns
             "tempo", "vida", "mundo", "casa", "coisa", "homem", "mulher", "dia",
             "vez", "ano", "governo", "pessoa", "parte", "cidade", "trabalho",
             "momento", "forma", "problema", "grupo", "país", "lugar", "caso",
             "ponto", "estado", "história", "exemplo", "família", "empresa",
             "água", "nome", "número", "noite", "verdade", "razão", "mão",
             "olho", "corpo", "palavra", "cabeça", "filho", "criança", "porta",
+            "dinheiro", "telefone", "celular", "computador", "internet",
+            "escola", "universidade", "professor", "aluno", "estudo",
+            "comida", "roupa", "carro", "rua", "caminho", "viagem",
+            "amigo", "amor", "coração", "mente", "alma", "espírito",
+            "teclado", "tecido", "tecnologia", "técnica", "texto", "teste",
+            // Adjetivos
             "grande", "novo", "bom", "mesmo", "último", "longo", "certo",
             "melhor", "pouco", "primeiro", "próprio", "possível", "político",
             "pequeno", "brasileiro", "importante", "diferente", "social",
             "bonito", "forte", "feliz", "triste", "rápido", "lento",
+            "correto", "errado", "fácil", "difícil", "simples", "completo",
+            // Cotidiano
             "obrigado", "obrigada", "desculpa", "perfeito", "combinado",
             "mensagem", "agora", "amanhã", "ontem", "hoje", "sempre", "nunca",
             "talvez", "aqui", "ali", "isso", "isto", "aquilo",
+            "certo", "errado", "verdade", "mentira", "certeza",
+            // Jurídico
             "justiça", "juri", "jurisprudência", "judicial", "jurídico", "juiz",
             "advogado", "processo", "sentença", "recurso", "petição", "audiência",
             "direito", "constitucional", "penal", "civil", "trabalhista",
+            "legislação", "tribunal", "réu", "autor", "testemunha",
+            // Esotérico/Hermético
             "alquimia", "astrologia", "hermetismo", "kabbalah", "gematria",
             "zodíaco", "elemento", "planeta", "símbolo", "ritual", "meditação",
             "consciência", "espírito", "energia", "transformação", "iluminação",
             "sabedoria", "mistério", "sagrado", "divino", "cósmico", "celestial",
-            "informação", "informações", "implementar", "incluir",
-            "início", "internet", "investigação", "investimento",
+            "chakra", "mantra", "karma", "dharma", "tantra", "yantra",
+            // Tecnologia
             "política", "público", "pública", "nacional", "federal", "estadual",
             "municipal", "tecnologia", "digital", "sistema", "projeto", "programa",
-            "resultado", "situação", "condição", "solução", "decisão", "questão"
+            "resultado", "situação", "condição", "solução", "decisão", "questão",
+            "aplicativo", "software", "hardware", "dados", "rede", "servidor",
+            "configuração", "atualização", "instalação", "desenvolvimento"
         ).sorted()
     }
 }

@@ -12,15 +12,15 @@ import androidx.core.content.ContextCompat
 import com.hermetic.keyboard.R
 
 /**
- * Number and special characters keyboard view.
- * Two pages: numbers+common symbols, and more symbols.
+ * Number and special characters keyboard.
+ * Backspace supports long-press repeat via BackspaceHelper.
  */
 class NumberSymbolsView(
     context: Context,
     private val onKeyPress: (String) -> Unit
 ) : LinearLayout(context) {
 
-    private var page = 0 // 0 = numbers, 1 = more symbols
+    private var page = 0
 
     init {
         orientation = VERTICAL
@@ -50,7 +50,7 @@ class NumberSymbolsView(
                     isSpecial -> 1.5f
                     else -> 1f
                 }
-                addView(TextView(context).apply {
+                val tv = TextView(context).apply {
                     text = when (key) {
                         " " -> ""
                         "MAIS" -> if (page == 0) "#+=" else "123"
@@ -63,16 +63,19 @@ class NumberSymbolsView(
                     layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, weight).apply {
                         marginStart = dpToPx(3); marginEnd = dpToPx(3)
                     }
-                    isFocusable = false
-                    isClickable = true
+                    isFocusable = false; isClickable = true
+                }
 
-                    setOnTouchListener { v, event ->
+                // Backspace gets long-press repeat
+                if (key == "⌫") {
+                    BackspaceHelper.attach(tv) { onKeyPress("BACKSPACE") }
+                } else {
+                    tv.setOnTouchListener { v, event ->
                         when (event.action) {
                             MotionEvent.ACTION_DOWN -> {
                                 v.isPressed = true
                                 v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                                handleKey(key)
-                                true
+                                handleKey(key); true
                             }
                             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                                 v.isPressed = false; true
@@ -80,7 +83,8 @@ class NumberSymbolsView(
                             else -> false
                         }
                     }
-                })
+                }
+                addView(tv)
             }
         }
     }
@@ -89,7 +93,6 @@ class NumberSymbolsView(
         when (key) {
             "ABC" -> onKeyPress("SWITCH_TO_ALPHA")
             "MAIS" -> { page = if (page == 0) 1 else 0; buildPage() }
-            "⌫" -> onKeyPress("BACKSPACE")
             "↵" -> onKeyPress("ENTER")
             " " -> onKeyPress(" ")
             else -> onKeyPress(key)

@@ -1,14 +1,9 @@
 package com.hermetic.keyboard.ui.panel
 
 import android.content.Context
-import android.text.Editable
-import android.text.InputType
-import android.text.TextWatcher
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
-import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -35,8 +30,6 @@ class HermeticPanelView(
     private var currentCategoryId: String? = null
     private lateinit var symbolGrid: RecyclerView
     private lateinit var categoryBar: LinearLayout
-    private lateinit var searchField: EditText
-    private var searchText = StringBuilder()
 
     init {
         orientation = VERTICAL
@@ -57,9 +50,7 @@ class HermeticPanelView(
     }
 
     /**
-     * Search row with a text display and inline mini-keyboard for search.
-     * Since we ARE the keyboard, we can't open another keyboard for the EditText.
-     * Instead we show the search text and let the bottom bar handle input.
+     * Search row with title "Símbolos Esotéricos" and clear button.
      */
     private fun createSearchRow(): LinearLayout {
         return LinearLayout(context).apply {
@@ -67,45 +58,15 @@ class HermeticPanelView(
             gravity = Gravity.CENTER_VERTICAL
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dpToPx(40))
             setBackgroundColor(ContextCompat.getColor(context, R.color.surface))
-            setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4))
+            setPadding(dpToPx(12), dpToPx(4), dpToPx(12), dpToPx(4))
 
-            // Search icon
+            // Title
             addView(TextView(context).apply {
-                text = "🔍"
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-                setPadding(dpToPx(4), 0, dpToPx(8), 0)
-            })
-
-            // Search text display (not a real EditText to avoid focus issues)
-            searchField = EditText(context).apply {
-                hint = "Buscar símbolos..."
-                setHintTextColor(ContextCompat.getColor(context, R.color.on_surface))
+                text = "Símbolos Esotéricos"
                 setTextColor(ContextCompat.getColor(context, R.color.on_background))
-                setBackgroundColor(ContextCompat.getColor(context, R.color.key_background))
-                setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-                isSingleLine = true
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                 layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f)
-                // CRITICAL: prevent focus which would close the IME
-                isFocusable = false
-                isFocusableInTouchMode = false
-                inputType = InputType.TYPE_NULL
-                // Use as display only — search keys are in bottom bar
-            }
-            addView(searchField)
-
-            // Clear button
-            addView(TextView(context).apply {
-                text = "✕"
-                gravity = Gravity.CENTER
-                setTextColor(ContextCompat.getColor(context, R.color.on_surface))
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-                setPadding(dpToPx(8), 0, dpToPx(4), 0)
-                setOnClickListener {
-                    searchText.clear()
-                    searchField.setText("")
-                    currentCategoryId?.let { selectCategory(it) }
-                }
+                gravity = Gravity.CENTER_VERTICAL
             })
         }
     }
@@ -182,29 +143,6 @@ class HermeticPanelView(
             val isSelected = tab.tag == selectedId
             tab.setBackgroundColor(ContextCompat.getColor(context,
                 if (isSelected) R.color.category_selected else R.color.category_unselected))
-        }
-    }
-
-    /**
-     * Called externally to type into the search field.
-     */
-    fun typeSearchChar(char: String) {
-        searchText.append(char)
-        searchField.setText(searchText.toString())
-        if (searchText.length >= 2) {
-            displaySearchResults(searchText.toString())
-        }
-    }
-
-    fun deleteSearchChar() {
-        if (searchText.isNotEmpty()) {
-            searchText.deleteCharAt(searchText.length - 1)
-            searchField.setText(searchText.toString())
-            if (searchText.isEmpty()) {
-                currentCategoryId?.let { selectCategory(it) }
-            } else {
-                displaySearchResults(searchText.toString())
-            }
         }
     }
 
