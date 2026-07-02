@@ -48,6 +48,8 @@ class HermeticPanelView(
         addView(createCategoryBar())
         // Symbol grid
         addView(createSymbolGrid())
+        // Bottom navigation bar (back to QWERTY)
+        addView(createBottomBar())
 
         // Load first category
         val categories = repository.getCategories()
@@ -106,12 +108,17 @@ class HermeticPanelView(
 
     private fun createCategoryTab(category: SymbolCategory): TextView {
         return TextView(context).apply {
-            text = category.icon
+            // Use text labels instead of emoji-only icons
+            text = category.name.split(" ").first() // Short label: "Planetary", "Zodiac", etc.
             gravity = Gravity.CENTER
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
-            setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+            setTextColor(ContextCompat.getColor(context, R.color.on_background))
+            setPadding(dpToPx(10), dpToPx(8), dpToPx(10), dpToPx(8))
             setBackgroundColor(ContextCompat.getColor(context, R.color.category_unselected))
             tag = category.id
+            layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+                marginEnd = dpToPx(4)
+            }
 
             setOnClickListener {
                 selectCategory(category.id)
@@ -164,6 +171,66 @@ class HermeticPanelView(
         val screenWidthDp = context.resources.displayMetrics.widthPixels /
                 context.resources.displayMetrics.density
         return (screenWidthDp / 52).toInt().coerceIn(6, 10)
+    }
+
+    private fun createBottomBar(): LinearLayout {
+        return LinearLayout(context).apply {
+            orientation = HORIZONTAL
+            gravity = Gravity.CENTER
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dpToPx(44))
+            setBackgroundColor(ContextCompat.getColor(context, R.color.surface))
+            setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4))
+
+            // ABC button - back to QWERTY
+            addView(TextView(context).apply {
+                text = "ABC"
+                gravity = Gravity.CENTER
+                setTextColor(ContextCompat.getColor(context, R.color.on_background))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+                setBackgroundResource(R.drawable.key_background)
+                setPadding(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6))
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT).apply {
+                    marginEnd = dpToPx(8)
+                }
+                setOnClickListener {
+                    // Trigger switch back - find the IME via context
+                    val ime = context as? com.hermetic.keyboard.ime.HermeticIME
+                    ime?.switchToMainKeyboard()
+                }
+            })
+
+            // Hebrew button
+            addView(TextView(context).apply {
+                text = "א"
+                gravity = Gravity.CENTER
+                setTextColor(ContextCompat.getColor(context, R.color.on_background))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                setBackgroundResource(R.drawable.key_background)
+                setPadding(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6))
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT).apply {
+                    marginEnd = dpToPx(8)
+                }
+                setOnClickListener {
+                    val ime = context as? com.hermetic.keyboard.ime.HermeticIME
+                    ime?.switchToHebrewKeyboard()
+                }
+            })
+
+            // Backspace
+            addView(TextView(context).apply {
+                text = "⌫"
+                gravity = Gravity.CENTER
+                setTextColor(ContextCompat.getColor(context, R.color.on_background))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                setBackgroundResource(R.drawable.key_background)
+                setPadding(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6))
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT)
+                setOnClickListener {
+                    val ime = context as? com.hermetic.keyboard.ime.HermeticIME
+                    ime?.deleteBackward()
+                }
+            })
+        }
     }
 
     private fun dpToPx(dp: Int): Int {

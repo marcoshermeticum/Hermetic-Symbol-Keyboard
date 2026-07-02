@@ -3,18 +3,14 @@ package com.hermetic.keyboard.ime
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import com.hermetic.keyboard.R
 import com.hermetic.keyboard.symbols.data.SymbolDatabase
 import com.hermetic.keyboard.symbols.data.SymbolDataProvider
 import com.hermetic.keyboard.symbols.repository.SymbolRepository
 import com.hermetic.keyboard.symbols.search.SearchEngine
-import com.hermetic.keyboard.ui.panel.HermeticPanelView
-import com.hermetic.keyboard.ui.hebrew.HebrewKeyboardView
 import com.hermetic.keyboard.ui.KeyboardLayoutManager
 
 /**
  * Main InputMethodService for the Hermetic Symbol Keyboard.
- * Manages the lifecycle of keyboard views and handles text input.
  */
 class HermeticIME : InputMethodService() {
 
@@ -26,7 +22,6 @@ class HermeticIME : InputMethodService() {
 
     override fun onCreate() {
         super.onCreate()
-
         val db = SymbolDatabase.getInstance(this)
         val dataProvider = SymbolDataProvider(this)
         repository = SymbolRepository(dataProvider, db.favoriteDao(), db.recentDao())
@@ -45,51 +40,41 @@ class HermeticIME : InputMethodService() {
         layoutManager.onInputStarted(info)
     }
 
-    /**
-     * Commits text to the currently focused editor.
-     */
     fun commitText(text: String) {
         currentInputConnection?.commitText(text, 1)
     }
 
-    /**
-     * Sends a key event (backspace, enter, etc.)
-     */
     fun sendKeyEvent(event: android.view.KeyEvent) {
         currentInputConnection?.sendKeyEvent(event)
     }
 
-    /**
-     * Deletes characters before the cursor.
-     */
     fun deleteBackward(count: Int = 1) {
         currentInputConnection?.deleteSurroundingText(count, 0)
     }
 
-    /**
-     * Switches to the hermetic symbols panel.
-     */
     fun switchToHermeticPanel() {
         val view = layoutManager.createHermeticPanelView()
-        setInputView(view)
-        currentView = view
+        switchView(view)
     }
 
-    /**
-     * Switches to the Hebrew transliterated keyboard.
-     */
     fun switchToHebrewKeyboard() {
         val view = layoutManager.createHebrewKeyboardView()
-        setInputView(view)
-        currentView = view
+        switchView(view)
     }
 
-    /**
-     * Switches back to the main QWERTY keyboard.
-     */
     fun switchToMainKeyboard() {
         val view = layoutManager.createMainKeyboardView()
+        switchView(view)
+    }
+
+    fun switchToEmojiPanel() {
+        val view = layoutManager.createEmojiPanelView()
+        switchView(view)
+    }
+
+    private fun switchView(view: View) {
         setInputView(view)
         currentView = view
+        KeyboardLayoutManager.applyTransitionAnimation(view)
     }
 }
