@@ -1,14 +1,15 @@
 package com.hermetic.keyboard.ui
 
-import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import com.hermetic.keyboard.R
 import com.hermetic.keyboard.ime.HermeticIME
 import com.hermetic.keyboard.symbols.repository.SymbolRepository
 import com.hermetic.keyboard.symbols.search.SearchEngine
 import com.hermetic.keyboard.ui.hebrew.HebrewKeyboardView
 import com.hermetic.keyboard.ui.panel.HermeticPanelView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Manages creation and switching between different keyboard layout views.
@@ -19,13 +20,23 @@ class KeyboardLayoutManager(
     private val searchEngine: SearchEngine
 ) {
 
+    private val scope = CoroutineScope(Dispatchers.Main)
+
     /**
      * Creates the main QWERTY keyboard view.
      */
     fun createMainKeyboardView(): View {
-        val view = LayoutInflater.from(ime).inflate(R.layout.keyboard_main, null)
-        // TODO: Wire up QWERTY key listeners
-        return view
+        return QwertyKeyboardView(ime) { output ->
+            when (output) {
+                "BACKSPACE" -> ime.deleteBackward()
+                "DELETE_WORD" -> ime.deleteBackward(10)
+                "ENTER" -> ime.commitText("\n")
+                "SWITCH_TO_SYMBOLS" -> ime.switchToHermeticPanel()
+                "SWITCH_TO_HERMETIC" -> ime.switchToHermeticPanel()
+                "SWITCH_TO_HEBREW" -> ime.switchToHebrewKeyboard()
+                else -> ime.commitText(output)
+            }
+        }
     }
 
     /**
@@ -34,6 +45,9 @@ class KeyboardLayoutManager(
     fun createHermeticPanelView(): View {
         return HermeticPanelView(ime, repository, searchEngine) { symbol ->
             ime.commitText(symbol.symbol)
+            scope.launch {
+                repository.addRecent(symbol)
+            }
         }
     }
 
