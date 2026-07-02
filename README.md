@@ -13,10 +13,13 @@
 - [Sobre o Projeto](#sobre-o-projeto)
 - [Funcionalidades](#funcionalidades)
 - [Requisitos do Sistema](#requisitos-do-sistema)
-- [Configuração do Ambiente de Desenvolvimento](#configuração-do-ambiente-de-desenvolvimento)
+- [Setup Rápido via Terminal (Windows)](#setup-rápido-via-terminal-windows)
+- [Setup Rápido via Terminal (macOS/Linux)](#setup-rápido-via-terminal-macoslinux)
 - [Compilando o Projeto](#compilando-o-projeto)
-- [Instalando no Celular](#instalando-no-celular)
-- [Debug via Computador (ADB)](#debug-via-computador-adb)
+- [Instalando no Celular via Wi-Fi](#instalando-no-celular-via-wi-fi)
+- [Instalando no Celular via USB](#instalando-no-celular-via-usb)
+- [Ativando o Teclado no Android](#ativando-o-teclado-no-android)
+- [Debug e Logs](#debug-e-logs)
 - [Executando Testes](#executando-testes)
 - [CI/CD](#cicd)
 - [Estrutura do Projeto](#estrutura-do-projeto)
@@ -30,32 +33,25 @@
 
 ## Sobre o Projeto
 
-O **Hermetic Symbol Keyboard** é um teclado Android construído sobre a API `InputMethodService`, com um painel dedicado para inserção de símbolos herméticos, alquímicos, astrológicos e do alfabeto hebraico (Aleph Beit) — todos baseados em codepoints Unicode oficiais.
+O **Hermetic Symbol Keyboard** é um teclado Android construído sobre a API `InputMethodService`, com um painel dedicado para inserção de símbolos herméticos, alquímicos, astrológicos e do alfabeto hebraico (Aleph Beit).
 
-Além do painel de símbolos, inclui um **teclado hebraico transliterado** onde cada tecla mostra o nome da letra em caracteres latinos (ex: "Aleph", "Shin") e insere o caractere hebraico correspondente (א, ש).
+Inclui um **teclado hebraico transliterado** onde cada tecla mostra o nome da letra em caracteres latinos (ex: "Aleph", "Shin") e insere o caractere hebraico correspondente (א, ש).
 
-O teclado funciona em **qualquer dispositivo Android 11+** com qualquer resolução de tela.
-
-**Dispositivo de teste principal:** Samsung Galaxy A30s SM-A307GT (720x1560, HD+)
+Funciona em **qualquer dispositivo Android 11+** com qualquer resolução de tela.
 
 ---
 
 ## Funcionalidades
 
-- ⌨️ Teclado QWERTY completo multi-idioma (EN, PT-BR, ES)
-- 🔮 Painel de símbolos herméticos com busca e favoritos
-- ♈ Signos do zodíaco (12 símbolos)
-- ☿ Símbolos planetários (10 símbolos)
-- 🜂 Elementos clássicos (4 símbolos)
-- 🜍 Símbolos alquímicos
-- א **Aleph Beit completo** (22 letras + 5 formas finais)
+- ⌨️ Teclado QWERTY completo com shift, backspace, enter
+- 🔮 Painel de símbolos herméticos com busca e categorias
+- ♈ Signos do zodíaco (12) · ☿ Planetas (10) · 🜂 Elementos (4) · 🜍 Alquímicos (4)
+- א **Aleph Beit completo** (22 letras + 5 formas finais) com gematria
 - 🇮🇱 **Teclado hebraico transliterado** — teclas com nomes em latim, output em hebraico
-- ☥ Símbolos egípcios (Ankh)
-- ⛤ Símbolos esotéricos diversos (pentagramas, hexagramas, etc.)
-- 🎨 Temas: Dark Hermetic, Light Hermetic, AMOLED Black, Classic
-- ⭐ Sistema de favoritos e recentes
+- ☥ Símbolos egípcios · ⛤ Esotéricos diversos
+- 🎨 Tema Dark Hermetic (cores: #4C2062, #271F0E, #090908)
+- ⭐ Favoritos e recentes persistidos (Room DB)
 - 🔍 Busca por nome, keyword ou significado
-- 📊 Gematria: valor numérico exibido nas letras hebraicas
 
 ---
 
@@ -65,336 +61,346 @@ O teclado funciona em **qualquer dispositivo Android 11+** com qualquer resoluç
 | Requisito | Mínimo |
 |-----------|--------|
 | Android | 11 (API 30) ou superior |
-| Espaço | ~30 MB |
-| Resolução | Qualquer (responsivo) |
+| Espaço | ~13 MB |
 
-### Para desenvolvimento
+### Para compilar
 
-| Ferramenta | Versão Mínima | Como verificar |
-|------------|---------------|----------------|
-| **Java JDK** | 17 | `java -version` |
-| **Android Studio** | Hedgehog (2023.1.1)+ | Help → About |
-| **Android SDK** | API 34 | SDK Manager |
-| **Android Build Tools** | 34.0.0 | SDK Manager |
-| **Gradle** | 8.5 (via wrapper) | `gradlew --version` |
-| **Git** | 2.30+ | `git --version` |
-| **ADB** | Incluído no SDK | `adb --version` |
-| **Kotlin** | 1.9.22 (via Gradle) | Automático |
-
-### Hardware recomendado para build
-- RAM: 8 GB mínimo (16 GB recomendado)
-- Disco: 10 GB livres para SDK + projeto
-- CPU: Qualquer x64 moderno
+| Ferramenta | Versão | Instalação automática no setup |
+|------------|--------|-------------------------------|
+| Java JDK | 17 | ✅ |
+| Android SDK | API 34 + Build Tools 34 | ✅ |
+| Gradle | 8.5 | ✅ |
+| ADB | Último | ✅ |
 
 ---
 
-## Configuração do Ambiente de Desenvolvimento
+## Setup Rápido via Terminal (Windows)
 
-### 1. Instalar Java JDK 17
+Abra o **PowerShell** (não precisa ser admin) e execute os comandos abaixo. O processo completo leva ~5 minutos com internet boa.
 
-**Windows (PowerShell):**
+### 1. Instalar JDK 17
+
 ```powershell
-winget install Microsoft.OpenJDK.17
+winget install Microsoft.OpenJDK.17 --accept-package-agreements --accept-source-agreements
 ```
 
-**Windows (manual):** Baixe em https://adoptium.net/temurin/releases/?version=17
+Após instalar, feche e reabra o PowerShell, depois configure:
 
-**macOS:**
-```bash
-brew install openjdk@17
-```
+```powershell
+# Encontrar o JDK instalado
+$jdk = (Get-ChildItem "C:\Program Files\Microsoft" -Filter "jdk-17*" -Directory).FullName
+Write-Host "JDK encontrado em: $jdk"
 
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt install openjdk-17-jdk
-```
+# Configurar variáveis de ambiente (permanente)
+[Environment]::SetEnvironmentVariable("JAVA_HOME", $jdk, "User")
+$env:JAVA_HOME = $jdk
+$env:Path = "$jdk\bin;$env:Path"
 
-Verifique:
-```bash
+# Verificar
 java -version
-# openjdk version "17.x.x"
 ```
 
-### 2. Instalar Android Studio
+### 2. Instalar Android SDK + ADB
 
-1. Baixe em: https://developer.android.com/studio
-2. Instale e execute a configuração inicial
-3. **SDK Manager** (Tools → SDK Manager):
-   - **SDK Platforms:** Marque "Android 14.0 (API 34)" e "Android 11.0 (API 30)"
-   - **SDK Tools:** Marque:
-     - Android SDK Build-Tools 34
-     - Android SDK Command-line Tools
-     - Android Emulator
-     - Android SDK Platform-Tools
-4. Clique "Apply" e aguarde
-
-### 3. Configurar variáveis de ambiente
-
-**Windows (PowerShell como admin):**
 ```powershell
-[Environment]::SetEnvironmentVariable("ANDROID_HOME", "$env:LOCALAPPDATA\Android\Sdk", "User")
-[Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Microsoft\jdk-17", "User")
+# Criar pasta do SDK
+New-Item -ItemType Directory -Force -Path "C:\Android\Sdk" | Out-Null
 
-# Adicionar ao PATH
-$path = [Environment]::GetEnvironmentVariable("Path", "User")
-[Environment]::SetEnvironmentVariable("Path", "$path;$env:LOCALAPPDATA\Android\Sdk\platform-tools", "User")
+# Baixar Platform Tools (ADB)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+(New-Object Net.WebClient).DownloadFile("https://dl.google.com/android/repository/platform-tools-latest-windows.zip", "C:\Android\platform-tools.zip")
+Expand-Archive "C:\Android\platform-tools.zip" -DestinationPath "C:\" -Force
+
+# Baixar Command Line Tools
+(New-Object Net.WebClient).DownloadFile("https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip", "C:\Android\cmdline-tools.zip")
+Expand-Archive "C:\Android\cmdline-tools.zip" -DestinationPath "C:\Android\Sdk\cmdline-tools\temp" -Force
+Move-Item "C:\Android\Sdk\cmdline-tools\temp\cmdline-tools" "C:\Android\Sdk\cmdline-tools\latest" -Force
+Remove-Item "C:\Android\Sdk\cmdline-tools\temp" -Recurse -Force
+
+# Configurar variáveis
+[Environment]::SetEnvironmentVariable("ANDROID_HOME", "C:\Android\Sdk", "User")
+$currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
+[Environment]::SetEnvironmentVariable("Path", "$currentPath;C:\platform-tools;C:\Android\Sdk\cmdline-tools\latest\bin", "User")
+$env:ANDROID_HOME = "C:\Android\Sdk"
+$env:Path = "C:\platform-tools;C:\Android\Sdk\cmdline-tools\latest\bin;$env:Path"
+
+# Aceitar licenças
+$yesAnswers = ("y`n" * 20)
+$yesAnswers | cmd /c "C:\Android\Sdk\cmdline-tools\latest\bin\sdkmanager.bat --licenses --sdk_root=C:\Android\Sdk"
+
+# Instalar SDK Platform 34 e Build Tools
+cmd /c "C:\Android\Sdk\cmdline-tools\latest\bin\sdkmanager.bat --sdk_root=C:\Android\Sdk --install `"platforms;android-34`" `"build-tools;34.0.0`" `"platform-tools`""
 ```
 
-**macOS/Linux (~/.bashrc ou ~/.zshrc):**
+### 3. Instalar Gradle
+
+```powershell
+(New-Object Net.WebClient).DownloadFile("https://services.gradle.org/distributions/gradle-8.5-bin.zip", "C:\Android\gradle.zip")
+Expand-Archive "C:\Android\gradle.zip" -DestinationPath "C:\" -Force
+$env:Path = "C:\gradle-8.5\bin;$env:Path"
+
+# Verificar
+gradle --version
+```
+
+### 4. Clonar e Compilar
+
+```powershell
+git clone https://github.com/marcoshermeticum/Hermetic-Symbol-Keyboard.git
+cd Hermetic-Symbol-Keyboard
+
+# Criar local.properties
+"sdk.dir=C\:\\Android\\Sdk" | Out-File -Encoding utf8 local.properties
+
+# Compilar
+gradle assembleDebug --no-daemon
+```
+
+O APK será gerado em: `app\build\outputs\apk\debug\app-debug.apk`
+
+---
+
+## Setup Rápido via Terminal (macOS/Linux)
+
+### 1. Instalar dependências
+
 ```bash
-export ANDROID_HOME=$HOME/Android/Sdk
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
-export PATH=$PATH:$ANDROID_HOME/platform-tools
+# macOS
+brew install openjdk@17 gradle
+
+# Ubuntu/Debian
+sudo apt install openjdk-17-jdk gradle
+
+# Configurar JAVA_HOME
+export JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null || echo /usr/lib/jvm/java-17-openjdk-amd64)
 ```
 
-### 4. Clonar o repositório
+### 2. Instalar Android SDK
+
+```bash
+mkdir -p ~/Android/Sdk
+cd ~/Android
+
+# Baixar command-line tools
+# macOS:
+curl -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-mac-11076708_latest.zip
+# Linux:
+curl -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+
+unzip cmdline-tools.zip -d Sdk/cmdline-tools/temp
+mv Sdk/cmdline-tools/temp/cmdline-tools Sdk/cmdline-tools/latest
+rm -rf Sdk/cmdline-tools/temp
+
+# Configurar PATH
+export ANDROID_HOME=~/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+# Adicionar ao ~/.bashrc ou ~/.zshrc para persistir:
+echo 'export ANDROID_HOME=~/Android/Sdk' >> ~/.bashrc
+echo 'export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools' >> ~/.bashrc
+
+# Aceitar licenças e instalar SDK
+yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME
+sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+```
+
+### 3. Clonar e Compilar
 
 ```bash
 git clone https://github.com/marcoshermeticum/Hermetic-Symbol-Keyboard.git
 cd Hermetic-Symbol-Keyboard
+
+# Criar local.properties
+echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+# Compilar
+gradle assembleDebug --no-daemon
 ```
-
-### 5. Setup inicial (opcional)
-
-No Windows, execute o script de setup que guia a configuração:
-```cmd
-setup.bat
-```
-
-Ou simplesmente abra o projeto no Android Studio — ele configura tudo automaticamente.
-
-### 6. Abrir no Android Studio
-
-1. File → Open → Selecione a pasta do projeto
-2. Aguarde o Gradle sync (pode levar alguns minutos na primeira vez)
-3. Se pedir para atualizar o Gradle plugin, aceite
-
-### 7. Verificar ambiente
-
-```bash
-# Windows
-gradlew.bat assembleDebug
-
-# macOS/Linux
-chmod +x gradlew
-./gradlew assembleDebug
-```
-
-Se compilar sem erros, o ambiente está pronto.
 
 ---
 
 ## Compilando o Projeto
 
-### Via Android Studio
-1. Build → Select Build Variant → escolha **debug** ou **release**
-2. Build → Make Project (Ctrl+F9)
-3. APK gerado em: `app/build/outputs/apk/debug/`
-
-### Via linha de comando
+Após o setup, qualquer build subsequente é rápido:
 
 ```bash
-# Build debug
-gradlew.bat assembleDebug
+# Windows (PowerShell) - certifique-se que JAVA_HOME e ANDROID_HOME estão setados
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.19.10-hotspot"
+$env:ANDROID_HOME = "C:\Android\Sdk"
+$env:Path = "$env:JAVA_HOME\bin;C:\gradle-8.5\bin;C:\platform-tools;$env:Path"
 
-# Build release (requer keystore)
-gradlew.bat assembleRelease
+cd C:\caminho\para\Hermetic-Symbol-Keyboard
+gradle assembleDebug --no-daemon
 
-# Limpar e rebuildar
-gradlew.bat clean assembleDebug
+# macOS/Linux
+cd /caminho/para/Hermetic-Symbol-Keyboard
+gradle assembleDebug --no-daemon
+```
+
+Build incremental leva ~30-40 segundos. Build limpo:
+```bash
+gradle clean assembleDebug --no-daemon
 ```
 
 ---
 
-## Instalando no Celular
+## Instalando no Celular via Wi-Fi
 
-### Pré-requisitos no celular
+Método recomendado — não precisa de cabo USB. Requer Android 11+.
 
-#### 1. Ativar Opções de Desenvolvedor
-- **Samsung Galaxy A30s:** Configurações → Sobre o telefone → Informações do software → toque 7x em "Número da versão"
-- **Outros Android:** Configurações → Sobre o telefone → toque 7x em "Número da versão"
+### No celular:
 
-#### 2. Ativar Depuração USB
-- Configurações → Opções do desenvolvedor → Depuração USB: **ATIVADO**
-- (Samsung) Também ative: "Instalar via USB"
+1. **Ativar Opções de Desenvolvedor:**
+   - Configurações → Sobre o telefone → (Samsung: Informações do software) → toque **7x** em "Número da versão"
 
-#### 3. Permitir fontes desconhecidas (para instalação manual)
-- Configurações → Biometria e segurança → Instalar apps desconhecidos → Permitir para seu gerenciador de arquivos
+2. **Ativar Depuração sem fio:**
+   - Configurações → Opções do desenvolvedor → **Depuração sem fio** → ATIVAR
 
----
+3. **Parear:**
+   - Dentro de "Depuração sem fio", toque **"Parear dispositivo com código de pareamento"**
+   - Anote o **IP:Porta** e o **código de 6 dígitos**
 
-### Método 1: Run direto pelo Android Studio (recomendado para dev)
+### No terminal do PC:
 
-1. Conecte o celular via USB (cabo com dados!)
-2. No popup do celular, aceite "Permitir depuração USB?" (marque "Sempre permitir")
-3. Selecione o dispositivo no dropdown ao lado do botão ▶️ Run
-4. Clique **Run** (Shift+F10)
-5. O app será compilado, instalado e aberto automaticamente
+```powershell
+# Parear (só na primeira vez)
+adb pair 192.168.X.X:PORTA_PAREAMENTO CODIGO
+# Exemplo: adb pair 192.168.0.160:38968 971993
 
-### Método 2: Instalar via ADB (linha de comando)
+# Conectar (anote o IP:Porta da tela PRINCIPAL de "Depuração sem fio", não a de pareamento)
+adb connect 192.168.X.X:PORTA_CONEXAO
+# Exemplo: adb connect 192.168.0.160:39867
 
-```bash
-# Verificar se o dispositivo está conectado
+# Verificar conexão
 adb devices
-# Deve mostrar: XXXXXXXX    device
+# Deve mostrar: 192.168.X.X:PORTA    device
 
 # Instalar o APK
 adb install -r app\build\outputs\apk\debug\app-debug.apk
-
-# Se já existir uma versão instalada, force reinstall
-adb install -r -d app\build\outputs\apk\debug\app-debug.apk
 ```
 
-### Método 3: Copiar APK manualmente
-
-1. Copie o `.apk` para o celular (USB, Drive, email)
-2. No celular, abra o gerenciador de arquivos
-3. Toque no APK e aceite a instalação
+> ⚠️ A porta de **pareamento** e a porta de **conexão** são diferentes! Verifique no celular.
+>
+> ⚠️ A porta muda toda vez que você reativa a depuração sem fio. Se `adb connect` falhar, verifique a porta atual no celular.
 
 ---
 
-### ⌨️ Ativar o teclado após instalar
+## Instalando no Celular via USB
 
-**Samsung Galaxy A30s:**
-1. Configurações → **Gerenciamento geral** → **Lista de teclados e padrão**
-2. Ative **Hermetic Keyboard** (ou "Teclado Hermético")
-3. Toque em **Teclado padrão** e selecione o Hermetic Keyboard
-4. Abra qualquer app com campo de texto para testar
+### Pré-requisitos:
+- Cabo USB **com dados** (não só carga)
+- Windows: [Samsung USB Driver](https://developer.samsung.com/android-usb-driver) instalado
+- No celular: Opções do desenvolvedor → **Depuração USB** ativada
+- Samsung: Ativar também **"Instalar via USB"**
 
-**Outros Android:**
-1. Configurações → Sistema → Idioma e entrada → Teclado na tela
-2. Ative o Hermetic Keyboard
-3. Defina como padrão
+### Comandos:
 
-**Via ADB (atalho):**
+```powershell
+# Conectar cabo USB e aceitar o popup no celular
+
+# Verificar
+adb devices
+# Deve mostrar: SERIAL_NUMBER    device
+
+# Instalar
+adb install -r app\build\outputs\apk\debug\app-debug.apk
+```
+
+---
+
+## Ativando o Teclado no Android
+
+Após instalar o APK, o teclado precisa ser ativado manualmente (requisito de segurança do Android):
+
+### Via ADB (mais rápido):
 ```bash
 # Abrir configurações de teclado diretamente
 adb shell am start -a android.settings.INPUT_METHOD_SETTINGS
 ```
 
----
+### Manualmente (Samsung):
+1. Configurações → **Gerenciamento geral** → **Lista de teclados e padrão**
+2. Ative **"Hermetic Keyboard"**
+3. Toque em **"Teclado padrão"** e selecione Hermetic Keyboard
 
-## Debug via Computador (ADB)
+### Manualmente (Outros Android):
+1. Configurações → Sistema → Idioma e entrada → Teclado na tela
+2. Ative Hermetic Keyboard
+3. Defina como padrão
 
-### Verificar conexão
-```bash
-adb devices
+### Testar:
+Abra qualquer app com campo de texto (WhatsApp, Notas, etc.) — o teclado Hermetic deve aparecer.
 
-# Se não aparecer:
-adb kill-server
-adb start-server
-adb devices
+**Layout do teclado:**
+```
+┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+│ q │ w │ e │ r │ t │ y │ u │ i │ o │ p │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┘
+│ a │ s │ d │ f │ g │ h │ j │ k │ l │
+├────┼───┼───┼───┼───┼───┼───┼───┼────┤
+│ ⇧  │ z │ x │ c │ v │ b │ n │ m │ ⌫  │
+├────┼───┼───┼───────────────┼───┼────┤
+│?123│ 🔮│ א │    espaço     │ . │ ↵  │
+└────┴───┴───┴───────────────┴───┴────┘
+
+🔮 = Painel de símbolos herméticos
+א  = Teclado hebraico transliterado
 ```
 
-### Debug com Logcat
+---
+
+## Debug e Logs
+
+### Ver logs do teclado em tempo real:
 ```bash
-# Ver logs do app (tag principal)
-adb logcat -s HermeticKB
+adb logcat -s HermeticKB:D
 
 # Filtrar múltiplas tags
 adb logcat -s HermeticKB:D SymbolPanel:D HebrewKB:D
 
 # Salvar em arquivo
-adb logcat -s HermeticKB > debug_log.txt
-
-# Limpar buffer
-adb logcat -c
+adb logcat -s HermeticKB > debug.log
 ```
 
-### Debug com Breakpoints (Android Studio)
-1. Coloque breakpoints clicando na margem esquerda do editor
-2. Clique em **Debug** (Shift+F9) em vez de Run
-3. Use o painel "Debug" para step through, inspecionar variáveis
-
-### Debug Wireless (Android 11+)
+### Comandos úteis:
 ```bash
-# No celular: Opções do desenvolvedor → Depuração sem fio → Ativar
-# Toque "Parear dispositivo com código de pareamento"
+# Forçar fechar o teclado (se travar)
+adb shell am force-stop com.hermetic.keyboard.debug
 
-adb pair <IP>:<PORTA_PAREAMENTO>
-# Digite o código mostrado no celular
-
-adb connect <IP>:<PORTA_CONEXAO>
-adb devices
-```
-
-### Comandos ADB úteis
-```bash
 # Desinstalar
-adb uninstall com.hermetic.keyboard
-
-# Reinstalar mantendo dados
-adb install -r -d app-debug.apk
-
-# Abrir config de teclado
-adb shell am start -a android.settings.INPUT_METHOD_SETTINGS
+adb uninstall com.hermetic.keyboard.debug
 
 # Screenshot
 adb exec-out screencap -p > screenshot.png
 
-# Gravar tela
-adb shell screenrecord /sdcard/demo.mp4
+# Informações do device
+adb shell getprop ro.product.model
+adb shell getprop ro.build.version.release
+adb shell wm size
+```
 
-# Uso de memória
-adb shell dumpsys meminfo com.hermetic.keyboard
-
-# Force stop
-adb shell am force-stop com.hermetic.keyboard
+### Reconectar Wi-Fi (se a conexão cair):
+```bash
+# A porta muda quando a depuração é reativada
+# Verifique a nova porta no celular e reconecte:
+adb connect 192.168.X.X:NOVA_PORTA
 ```
 
 ---
 
 ## Executando Testes
 
-### Testes unitários (rodam na JVM, sem device)
-
+### Testes unitários (rodam no PC, sem device):
 ```bash
-# Todos
-gradlew.bat testDebugUnitTest
+gradle testDebugUnitTest --no-daemon
 
 # Classe específica
-gradlew.bat testDebugUnitTest --tests "com.hermetic.keyboard.symbols.search.SearchEngineTest"
-
-# Com relatório de cobertura
-gradlew.bat testDebugUnitTest jacocoTestReport
-# Relatório: app/build/reports/jacoco/index.html
+gradle testDebugUnitTest --no-daemon --tests "com.hermetic.keyboard.symbols.search.SearchEngineTest"
 ```
 
-### Testes instrumentados (requerem device/emulador)
-
+### Testes instrumentados (requerem device conectado):
 ```bash
-# Todos
-gradlew.bat connectedDebugAndroidTest
-
-# Classe específica
-gradlew.bat connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.hermetic.keyboard.ui.HermeticPanelTest
-```
-
-### Criar emulador para testes
-
-1. Tools → Device Manager → Create Device
-2. Selecione hardware:
-   - **Simular Galaxy A30s:** Custom device 720×1560, 6.4", 268dpi
-   - **HD genérico:** Pixel 3a
-   - **Tela menor:** Nexus 5
-3. System Image: **API 30** (Android 11) x86_64
-4. Finalize e inicie o emulador
-
-### Estrutura de testes
-```
-app/src/
-├── test/java/com/hermetic/keyboard/     # Unit tests (JVM)
-│   └── symbols/
-│       ├── SymbolRepositoryTest.kt      # Repositório + favoritos + recentes
-│       └── search/
-│           └── SearchEngineTest.kt      # Motor de busca
-│
-└── androidTest/java/com/hermetic/keyboard/  # Instrumented (device)
-    ├── ui/
-    │   ├── HermeticPanelTest.kt         # Painel de símbolos
-    │   └── HebrewKeyboardTest.kt        # Teclado hebraico
-    └── db/
-        └── SymbolDatabaseTest.kt        # Room DB
+gradle connectedDebugAndroidTest --no-daemon
 ```
 
 ---
@@ -407,46 +413,38 @@ O projeto usa **GitHub Actions** com 3 pipelines:
 |----------|---------|-----------|
 | **CI** | Push / PR para main | Lint → Build → Unit Tests → Instrumented Tests |
 | **Release** | Tag `v*` | Build release → Assina APK → Cria GitHub Release |
-| **Nightly** | Cron 03:00 UTC | Build + todos os testes + reports |
+| **Nightly** | Cron 03:00 UTC | Build completo + todos os testes |
 
-### Configurar Secrets (para release)
+### Configurar Secrets para Release:
 
-No GitHub: Settings → Secrets and variables → Actions → New repository secret:
+No GitHub: Settings → Secrets → Actions:
 
 | Secret | Valor |
 |--------|-------|
-| `KEYSTORE_FILE` | Keystore em base64 (ver abaixo) |
+| `KEYSTORE_FILE` | Keystore em base64 |
 | `KEYSTORE_PASSWORD` | Senha da keystore |
 | `KEY_ALIAS` | Alias da chave |
 | `KEY_PASSWORD` | Senha da chave |
 
-### Gerar Keystore (primeira vez)
-
+### Gerar Keystore:
 ```bash
 keytool -genkey -v -keystore hermetic-keyboard.jks \
   -keyalg RSA -keysize 2048 -validity 10000 \
-  -alias hermetic-key \
-  -storepass SUA_SENHA_AQUI \
-  -dname "CN=Hermetic Keyboard, OU=Dev, O=MarcosHermeticum, L=City, ST=State, C=BR"
-```
+  -alias hermetic-key -storepass SUA_SENHA \
+  -dname "CN=Hermetic Keyboard, O=MarcosHermeticum, C=BR"
 
-Converter para base64 (para o GitHub Secret):
-```bash
-# Linux/macOS
-base64 -w 0 hermetic-keyboard.jks > keystore_base64.txt
-
-# Windows PowerShell
+# Converter para base64 (para GitHub Secret)
+# Windows PowerShell:
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("hermetic-keyboard.jks")) | Set-Content keystore_base64.txt
+# Linux/macOS:
+base64 -w 0 hermetic-keyboard.jks > keystore_base64.txt
 ```
 
-> ⚠️ **NUNCA commite a keystore!** O `.gitignore` já exclui `*.jks`.
-
-### Criar uma release
-
+### Criar release:
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
-# O GitHub Actions fará o build, assinará o APK e criará a release automaticamente
+# GitHub Actions gera e publica o APK automaticamente
 ```
 
 ---
@@ -459,62 +457,35 @@ Hermetic-Symbol-Keyboard/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/hermetic/keyboard/
-│   │   │   │   ├── ime/
-│   │   │   │   │   └── HermeticIME.kt              # InputMethodService principal
-│   │   │   │   ├── symbols/
-│   │   │   │   │   ├── model/
-│   │   │   │   │   │   ├── Symbol.kt               # Modelo de símbolo
-│   │   │   │   │   │   ├── SymbolCategory.kt       # Modelo de categoria
-│   │   │   │   │   │   └── HebrewKey.kt            # Modelo de tecla hebraica
-│   │   │   │   │   ├── data/
-│   │   │   │   │   │   ├── SymbolDatabase.kt       # Room Database
-│   │   │   │   │   │   ├── Daos.kt                 # DAOs (Favorites, Recents)
-│   │   │   │   │   │   ├── Entities.kt             # Entidades Room
-│   │   │   │   │   │   └── SymbolDataProvider.kt   # Carrega JSON
-│   │   │   │   │   ├── repository/
-│   │   │   │   │   │   └── SymbolRepository.kt     # Repositório central
-│   │   │   │   │   └── search/
-│   │   │   │   │       └── SearchEngine.kt         # Motor de busca
+│   │   │   │   ├── ime/HermeticIME.kt              # InputMethodService
 │   │   │   │   ├── ui/
-│   │   │   │   │   ├── KeyboardLayoutManager.kt    # Gerencia layouts/views
-│   │   │   │   │   ├── panel/
-│   │   │   │   │   │   ├── HermeticPanelView.kt    # Painel de símbolos
-│   │   │   │   │   │   └── SymbolGridAdapter.kt    # Adapter do grid
-│   │   │   │   │   └── hebrew/
-│   │   │   │   │       └── HebrewKeyboardView.kt   # Teclado hebraico transliterado
-│   │   │   │   └── settings/
-│   │   │   │       └── SettingsActivity.kt         # Configurações
+│   │   │   │   │   ├── QwertyKeyboardView.kt       # Teclado QWERTY
+│   │   │   │   │   ├── KeyboardLayoutManager.kt    # Gerencia views
+│   │   │   │   │   ├── panel/HermeticPanelView.kt  # Painel símbolos
+│   │   │   │   │   ├── panel/SymbolGridAdapter.kt   # Grid adapter
+│   │   │   │   │   └── hebrew/HebrewKeyboardView.kt # Teclado hebraico
+│   │   │   │   ├── symbols/
+│   │   │   │   │   ├── model/Symbol.kt             # Modelos
+│   │   │   │   │   ├── data/SymbolDatabase.kt      # Room DB
+│   │   │   │   │   ├── data/SymbolDataProvider.kt  # JSON loader
+│   │   │   │   │   ├── repository/SymbolRepository.kt
+│   │   │   │   │   └── search/SearchEngine.kt      # Busca
+│   │   │   │   └── settings/SettingsActivity.kt
 │   │   │   ├── res/
-│   │   │   │   ├── layout/                         # Layouts XML
-│   │   │   │   ├── values/                         # Strings, colors, themes (EN)
-│   │   │   │   ├── values-pt-rBR/                  # Strings (PT-BR)
-│   │   │   │   ├── values-es/                      # Strings (ES)
-│   │   │   │   ├── drawable/                       # Key backgrounds, icons
-│   │   │   │   ├── raw/
-│   │   │   │   │   └── symbols.json                # Dados de todos os símbolos
-│   │   │   │   ├── xml/
-│   │   │   │   │   ├── method.xml                  # Definição do IME + subtypes
-│   │   │   │   │   └── preferences.xml             # Tela de preferências
-│   │   │   │   └── mipmap-anydpi-v26/              # Adaptive icon
+│   │   │   │   ├── raw/symbols.json                # 75 símbolos
+│   │   │   │   ├── values/colors.xml               # Branding
+│   │   │   │   ├── values/strings.xml              # EN
+│   │   │   │   ├── values-pt-rBR/strings.xml       # PT-BR
+│   │   │   │   └── values-es/strings.xml           # ES
 │   │   │   └── AndroidManifest.xml
-│   │   ├── test/                                   # Unit tests (JVM)
-│   │   └── androidTest/                            # Instrumented tests (device)
-│   ├── build.gradle.kts                            # App-level Gradle
-│   └── proguard-rules.pro
-├── .github/workflows/
-│   ├── ci.yml                                      # CI pipeline
-│   ├── release.yml                                 # Release pipeline
-│   └── nightly.yml                                 # Nightly builds
-├── gradle/wrapper/
-│   └── gradle-wrapper.properties
-├── base.json                                       # Especificação completa do projeto
-├── README.md                                       # Este arquivo
-├── LICENSE                                         # GPL-3.0
-├── .gitignore
-├── build.gradle.kts                                # Root Gradle
-├── settings.gradle.kts                             # Gradle settings
-├── gradle.properties                               # Gradle properties
-└── gradlew.bat                                     # Gradle wrapper (Windows)
+│   │   ├── test/                                   # Unit tests
+│   │   └── androidTest/                            # Instrumented tests
+│   └── build.gradle.kts
+├── .github/workflows/                              # CI/CD
+├── base.json                                       # Especificação
+├── docs/SETUP_SAMSUNG_DEBUG.md                     # Guia Samsung
+├── local.properties                                # (não commitado)
+└── build.gradle.kts
 ```
 
 ---
@@ -523,130 +494,132 @@ Hermetic-Symbol-Keyboard/
 
 | Categoria | Ícone | Qtd | Exemplos |
 |-----------|-------|-----|----------|
-| Planetary Symbols | ☉ | 10 | ☉ ☽ ☿ ♀ ♂ ♃ ♄ ♅ ♆ ♇ |
-| Zodiac Signs | ♈ | 12 | ♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓ |
-| Classical Elements | 🜂 | 4 | 🜂 🜁 🜃 🜄 |
-| Alchemical Symbols | 🜍 | 4 | 🜔 🜍 ☿ 🜪 |
-| Aleph Beit | א | 27 | א ב ג ד ה ו ז ח ט י כ ל מ נ ס ע פ צ ק ר ש ת ך ם ן ף ץ |
+| Planetary | ☉ | 10 | ☉ ☽ ☿ ♀ ♂ ♃ ♄ ♅ ♆ ♇ |
+| Zodiac | ♈ | 12 | ♈ ♉ ♊ ♋ ♌ ♍ ♎ ♏ ♐ ♑ ♒ ♓ |
+| Elements | 🜂 | 4 | 🜂 🜁 🜃 🜄 |
+| Alchemy | 🜍 | 4 | 🜔 🜍 ☿ 🜪 |
+| Aleph Beit | א | 27 | א ב ג ד ה ו ז ח ט י כ ל מ נ ס ע פ צ ק ר ש ת |
 | Egyptian | ☥ | 1 | ☥ |
-| Misc. Esoteric | ✡ | 17 | ✡ ☤ ⚕ ☯ ⛤ ⛧ ∞ △ ▽ |
+| Esoteric | ✡ | 17 | ✡ ☤ ☯ ⛤ ⛧ ∞ △ ▽ |
 
 ---
 
 ## Teclado Hebraico Transliterado
 
-Um dos diferenciais deste teclado é o layout **Hebrew Transliterated** — ideal para estudantes de Kabbalah, gematria e tradições herméticas que não estão familiarizados com o layout físico hebraico.
+Acessível pela tecla **א** no teclado principal.
 
-### Como funciona
-
-| Tecla mostra | Output inserido | Gematria |
-|--------------|-----------------|----------|
+| Tecla mostra | Insere | Gematria |
+|:---:|:---:|:---:|
 | Aleph | א | 1 |
 | Bet | ב | 2 |
 | Gimel | ג | 3 |
+| Dalet | ד | 4 |
+| He | ה | 5 |
+| Vav | ו | 6 |
+| Zayin | ז | 7 |
+| Chet | ח | 8 |
+| Tet | ט | 9 |
+| Yod | י | 10 |
+| Kaf | כ | 20 |
+| Lamed | ל | 30 |
+| Mem | מ | 40 |
+| Nun | נ | 50 |
+| Samekh | ס | 60 |
+| Ayin | ע | 70 |
+| Pe | פ | 80 |
+| Tsade | צ | 90 |
+| Qof | ק | 100 |
+| Resh | ר | 200 |
 | Shin | ש | 300 |
 | Tav | ת | 400 |
-| Mem· | ם (sofit) | 600 |
-| ... | ... | ... |
+| Kaf· | ך | 500 |
+| Mem· | ם | 600 |
+| Nun· | ן | 700 |
+| Pe· | ף | 800 |
+| Tsade· | ץ | 900 |
 
-### Acessar o layout
-- Via **tecla globe** (alternância de idioma) no teclado principal
-- Via **Configurações → Idioma e entrada → Subtypes**
-- Via tecla **ABC** no teclado hebraico para voltar ao QWERTY
-
-### Long-press
-Segure qualquer tecla para ver:
-- Nome completo da letra
-- Caractere hebraico ampliado
-- Valor de gematria
+Long-press em qualquer tecla mostra: nome completo + caractere + valor de gematria.
 
 ---
 
 ## Contribuindo
 
-1. Fork o repositório
-2. Crie branch: `git checkout -b feature/minha-feature`
-3. Commits claros: `feat: add new symbol category`
-4. Garanta que testes passam: `gradlew.bat testDebugUnitTest`
-5. Abra Pull Request
+```bash
+git clone https://github.com/marcoshermeticum/Hermetic-Symbol-Keyboard.git
+cd Hermetic-Symbol-Keyboard
+git checkout -b feature/minha-feature
 
-### Convenções
+# Desenvolver...
+
+gradle testDebugUnitTest --no-daemon  # Garantir que testes passam
+git add -A
+git commit -m "feat: descrição da feature"
+git push origin feature/minha-feature
+# Abrir PR no GitHub
+```
+
+### Convenções:
 - Kotlin para código novo
-- [Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html)
 - Commits: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
 
 ---
 
 ## Troubleshooting
 
-### Dispositivo não aparece no ADB
-```bash
-adb kill-server
-adb start-server
-adb devices
+### "adb não reconhecido"
+```powershell
+# Adicionar ao PATH da sessão
+$env:Path += ";C:\platform-tools"
+# Ou reinstalar: baixe de https://developer.android.com/tools/releases/platform-tools
 ```
-- Use cabo USB **com dados** (não apenas carga)
-- Windows: instale [Samsung USB Driver](https://developer.samsung.com/android-usb-driver)
-- Verifique "Depuração USB" ativada
+
+### "JAVA_HOME not set"
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Microsoft\jdk-17.0.19.10-hotspot"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+```
 
 ### Build falha: "SDK not found"
-Crie `local.properties` na raiz:
-```properties
-sdk.dir=C\:\\Users\\SEU_USER\\AppData\\Local\\Android\\Sdk
+```powershell
+# Criar local.properties na raiz do projeto
+"sdk.dir=C\:\\Android\\Sdk" | Out-File -Encoding utf8 local.properties
 ```
+
+### "adb connect" falha (conexão recusada)
+- A porta muda toda vez que a depuração sem fio é reativada
+- No celular: Opções do desenvolvedor → Depuração sem fio → verifique a porta atual
+- Celular e PC precisam estar na **mesma rede Wi-Fi**
+
+### "device unauthorized"
+- Desconecte e reconecte (USB) ou reconecte (Wi-Fi)
+- No celular, aceite o popup "Permitir depuração USB?"
+- Se não aparecer: Opções do desenvolvedor → "Revogar autorizações" → reconecte
+
+### Teclado instalou mas não aparece
+- Reinicie o dispositivo
+- Vá em Configurações → Apps → Hermetic Keyboard → verifique se está habilitado
+- `adb shell am start -a android.settings.INPUT_METHOD_SETTINGS`
 
 ### Símbolos alquímicos aparecem como □
 - Caracteres U+1F700+ requerem fontes compatíveis
-- O app embarca Noto Sans Symbols 2 como fallback
-- Baixe a fonte de: https://fonts.google.com/noto/specimen/Noto+Sans+Symbols+2
-- Coloque em: `app/src/main/res/font/`
+- Solução futura: embutir Noto Sans Symbols 2 em `app/src/main/res/font/`
 
-### Teclado não aparece nas opções
-- Reinicie o dispositivo após instalar
-- Verifique se o app não está sendo bloqueado pelo otimizador de bateria
-- Use: `adb shell am start -a android.settings.INPUT_METHOD_SETTINGS`
-
-### Emulador lento
-- Use imagens **x86_64** (não ARM)
-- Windows: Ative Windows Hypervisor Platform (Settings → Apps → Optional Features)
-- Aloque 2+ GB de RAM ao emulador
-
-### Gradle sync falha
-```bash
-gradlew.bat --stop
-# Delete a pasta .gradle do projeto e do user:
-rmdir /s /q .gradle
-rmdir /s /q %USERPROFILE%\.gradle\caches
-gradlew.bat clean
-```
-
-### Erro de JDK version
-Verifique que está usando JDK 17:
-```bash
-java -version
-# Deve ser 17.x
-
-# Se necessário, defina explicitamente:
-set JAVA_HOME=C:\Program Files\Microsoft\jdk-17
-```
+### Build lento na primeira vez
+Normal. A primeira compilação baixa ~300 MB de dependências. Builds seguintes levam ~30s.
 
 ---
 
 ## Licença
 
-Este projeto está licenciado sob a **GNU General Public License v3.0**.
-
-Veja [LICENSE](LICENSE) para detalhes completos.
+**GNU General Public License v3.0** — veja [LICENSE](LICENSE).
 
 ---
 
 ## Links Úteis
 
-- [Android IME Documentation](https://developer.android.com/develop/ui/views/touch-and-input/creating-input-method)
-- [Unicode Alchemical Symbols Block](https://www.unicode.org/charts/PDF/U1F700.pdf)
+- [Android IME Docs](https://developer.android.com/develop/ui/views/touch-and-input/creating-input-method)
+- [Unicode Alchemical Symbols](https://www.unicode.org/charts/PDF/U1F700.pdf)
 - [Unicode Hebrew Block](https://www.unicode.org/charts/PDF/U0590.pdf)
 - [Noto Sans Symbols 2](https://fonts.google.com/noto/specimen/Noto+Sans+Symbols+2)
-- [Noto Sans Hebrew](https://fonts.google.com/noto/specimen/Noto+Sans+Hebrew)
-- [Android Studio](https://developer.android.com/studio)
-- [Samsung USB Drivers](https://developer.samsung.com/android-usb-driver)
-- [GitHub Actions for Android](https://github.com/marketplace/actions/android-emulator-runner)
+- [ADB Releases](https://developer.android.com/tools/releases/platform-tools)
+- [Samsung USB Driver](https://developer.samsung.com/android-usb-driver)
