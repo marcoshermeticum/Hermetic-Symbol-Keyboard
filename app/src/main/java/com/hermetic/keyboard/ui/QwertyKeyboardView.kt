@@ -8,20 +8,22 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
-import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.hermetic.keyboard.R
 
 /**
- * QWERTY keyboard with long-press accented characters (PT-BR),
- * contextual suggestions, and immediate touch response.
+ * QWERTY keyboard with long-press accented characters shown inline (no PopupWindow).
+ * Accents appear as a horizontal row overlaying the top of the keyboard,
+ * avoiding focus issues with InputMethodService.
  */
 class QwertyKeyboardView(
     context: Context,
     private val onKeyPress: (String) -> Unit
-) : LinearLayout(context) {
+) : FrameLayout(context) {
 
     private var isShifted = false
     private var isCaps = false
@@ -30,19 +32,26 @@ class QwertyKeyboardView(
     private val longPressHandler = Handler(Looper.getMainLooper())
     private var isBackspaceHeld = false
     private var longPressTriggered = false
-    private var accentPopup: PopupWindow? = null
 
     private lateinit var suggestionBar: SuggestionBarView
+    private lateinit var keyboardLayout: LinearLayout
+    private lateinit var accentOverlay: LinearLayout
     private var currentWord = StringBuilder()
 
     init {
-        orientation = VERTICAL
         setBackgroundColor(ContextCompat.getColor(context, R.color.background))
-        setPadding(dpToPx(3), dpToPx(4), dpToPx(3), dpToPx(6))
         buildKeyboard()
     }
 
     private fun buildKeyboard() {
+        // Main keyboard column
+        keyboardLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dpToPx(3), dpToPx(4), dpToPx(3), dpToPx(6))
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        }
+
+        // Suggestion bar
         suggestionBar = SuggestionBarView(context) { suggestion ->
             val wordLen = currentWord.length
             if (wordLen > 0) onKeyPress("DELETE_WORD_$wordLen")
@@ -51,23 +60,39 @@ class QwertyKeyboardView(
             currentWord.clear()
             suggestionBar.clear()
         }
-        addView(suggestionBar)
+        keyboardLayout.addView(suggestionBar)
 
+        // Key rows
         val rows = listOf(
             listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
             listOf("a", "s", "d", "f", "g", "h", "j", "k", "l"),
             listOf("SHIFT", "z", "x", "c", "v", "b", "n", "m", "⌫"),
             listOf("123", "😀", "🔮", " ", ",", ".", "↵")
         )
+        rows.forEach { row -> keyboardLayout.addView(createRow(row)) }
 
-        rows.forEach { row -> addView(createRow(row)) }
+        addView(keyboardLayout)
+
+        // Accent overlay (hidden by default, shown on long-press)
+        accentOverlay = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setBackgroundColor(ContextCompat.getColor(context, R.color.surface))
+            setPadding(dpToPx(8), dpToPx(6), dpToPx(8), dpToPx(6))
+            elevation = dpToPx(6).toFloat()
+            visibility = View.GONE
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dpToPx(52)).apply {
+                topMargin = dpToPx(38) // Position below suggestion bar
+            }
+        }
+        addView(accentOverlay)
     }
 
     private fun createRow(keys: List<String>): LinearLayout {
         return LinearLayout(context).apply {
-            orientation = HORIZONTAL
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dpToPx(54)).apply {
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(54)).apply {
                 topMargin = dpToPx(4)
             }
             keys.forEach { key -> addView(createKey(key)) }
@@ -108,7 +133,7 @@ class QwertyKeyboardView(
                 else -> 21f
             })
             setBackgroundResource(R.drawable.key_background)
-            layoutParams = LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, weight).apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, weight).apply {
                 marginStart = dpToPx(3)
                 marginEnd = dpToPx(3)
             }
@@ -134,12 +159,10 @@ class QwertyKeyboardView(
                             isBackspaceHeld = true
                             startBackspaceRepeat()
                         } else if (hasAccents(key)) {
-                            // Start long-press timer for accented chars
                             longPressHandler.postDelayed({
                                 longPressTriggered = true
-                                showAccentPopup(v as TextView, key)
-                            }, 350)
-                            // Don't fire key yet — wait for UP
+                                showAccentRow(key)
+                            }, 400)
                         } else {
                             handleKeyPress(key)
                         }
@@ -153,10 +176,8 @@ class QwertyKeyboardView(
                             isBackspaceHeld = false
                             backspaceHandler.removeCallbacksAndMessages(null)
                         } else if (hasAccents(key) && !longPressTriggered) {
-                            // Short tap — just type the letter
                             handleKeyPress(key)
                         }
-                        // If longPressTriggered, popup handles the selection
                         true
                     }
                     else -> false
@@ -167,53 +188,65 @@ class QwertyKeyboardView(
 
     private fun hasAccents(key: String): Boolean = ACCENT_MAP.containsKey(key.lowercase())
 
-    private fun showAccentPopup(anchorView: TextView, key: String) {
+    /**
+     * Shows accented characters as an inline overlay row.
+     * No PopupWindow — avoids stealing focus from InputMethodService.
+     */
+    private fun showAccentRow(key: String) {
         val accents = ACCENT_MAP[key.lowercase()] ?: return
         val chars = if (isShifted || isCaps) accents.map { it.uppercase() } else accents
 
-        accentPopup?.dismiss()
+        accentOverlay.removeAllViews()
 
-        val popupLayout = LinearLayout(context).apply {
-            orientation = HORIZONTAL
-            setBackgroundColor(ContextCompat.getColor(context, R.color.surface))
-            setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4))
-            elevation = dpToPx(4).toFloat()
-        }
+        // Add the base character first
+        val baseChar = if (isShifted || isCaps) key.uppercase() else key
+        addAccentButton(baseChar)
 
-        chars.forEach { char ->
-            popupLayout.addView(TextView(context).apply {
-                text = char
-                gravity = Gravity.CENTER
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
-                setTextColor(ContextCompat.getColor(context, R.color.on_background))
-                setBackgroundResource(R.drawable.key_background)
-                setPadding(dpToPx(14), dpToPx(8), dpToPx(14), dpToPx(8))
-                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-                    marginStart = dpToPx(2)
-                    marginEnd = dpToPx(2)
-                }
-                setOnClickListener {
-                    handleAccentChar(char)
-                    accentPopup?.dismiss()
-                }
-            })
-        }
+        // Add accented variants
+        chars.forEach { char -> addAccentButton(char) }
 
-        accentPopup = PopupWindow(popupLayout, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, true).apply {
-            isOutsideTouchable = true
-            setOnDismissListener { longPressTriggered = false }
-            showAsDropDown(anchorView, 0, -anchorView.height - dpToPx(50))
-        }
+        // Add close button
+        accentOverlay.addView(TextView(context).apply {
+            text = "✕"
+            gravity = Gravity.CENTER
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTextColor(ContextCompat.getColor(context, R.color.on_surface))
+            setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8))
+            setOnClickListener { hideAccentRow() }
+        })
+
+        accentOverlay.visibility = View.VISIBLE
     }
 
-    private fun handleAccentChar(char: String) {
-        onKeyPress(char)
-        currentWord.append(char)
-        suggestionBar.updateSuggestions(currentWord.toString())
-        if (isShifted && !isCaps) {
-            isShifted = false
-            updateLetterCase()
-        }
+    private fun addAccentButton(char: String) {
+        accentOverlay.addView(TextView(context).apply {
+            text = char
+            gravity = Gravity.CENTER
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
+            setTextColor(ContextCompat.getColor(context, R.color.on_background))
+            setBackgroundResource(R.drawable.key_background)
+            setPadding(dpToPx(14), dpToPx(8), dpToPx(14), dpToPx(8))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginStart = dpToPx(3)
+                marginEnd = dpToPx(3)
+            }
+            isFocusable = false
+            setOnClickListener {
+                onKeyPress(char)
+                currentWord.append(char)
+                suggestionBar.updateSuggestions(currentWord.toString())
+                if (isShifted && !isCaps) { isShifted = false; updateLetterCase() }
+                hideAccentRow()
+            }
+        })
+    }
+
+    private fun hideAccentRow() {
+        accentOverlay.visibility = View.GONE
+        longPressTriggered = false
     }
 
     private fun startBackspaceRepeat() {
@@ -229,6 +262,9 @@ class QwertyKeyboardView(
     }
 
     private fun handleKeyPress(key: String) {
+        // Hide accent overlay if visible
+        if (accentOverlay.visibility == View.VISIBLE) hideAccentRow()
+
         when (key) {
             "SHIFT" -> toggleShift()
             "⌫" -> { onKeyPress("BACKSPACE"); trackBackspace() }
@@ -287,7 +323,7 @@ class QwertyKeyboardView(
         TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), context.resources.displayMetrics).toInt()
 
     companion object {
-        /** Long-press accent map for Portuguese (and common Latin languages) */
+        /** Long-press accent map for Portuguese and common Latin languages */
         val ACCENT_MAP = mapOf(
             "a" to listOf("á", "à", "â", "ã", "ä"),
             "e" to listOf("é", "è", "ê", "ë"),

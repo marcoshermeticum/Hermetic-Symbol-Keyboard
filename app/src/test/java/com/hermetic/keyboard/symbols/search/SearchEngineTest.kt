@@ -23,7 +23,11 @@ class SearchEngineTest {
             Symbol("hebrew_0", "hebrew", "Aleph", "א", "U+05D0",
                 keywords = listOf("aleph", "air", "spirit", "1"), meaning = "Ox, breath, spirit.", gematriaValue = 1),
             Symbol("hebrew_1", "hebrew", "Shin", "ש", "U+05E9",
-                keywords = listOf("shin", "fire", "300"), meaning = "Tooth, fire, divine power.", gematriaValue = 300)
+                keywords = listOf("shin", "fire", "300"), meaning = "Tooth, fire, divine power.", gematriaValue = 300),
+            Symbol("alchemy_0", "alchemy", "Salt", "🜔", "U+1F714",
+                keywords = listOf("salt", "body", "crystallization"), meaning = "Body, crystallization."),
+            Symbol("alchemy_1", "alchemy", "Sulfur", "🜍", "U+1F70D",
+                keywords = listOf("sulfur", "soul", "active"), meaning = "Soul, active principle.")
         )
     }
 
@@ -42,14 +46,14 @@ class SearchEngineTest {
     }
 
     @Test
-    fun `search by keyword`() {
+    fun `search by keyword finds correct symbol`() {
         val results = searchEngine.search(testSymbols, "gold")
         assertTrue(results.isNotEmpty())
         assertEquals("Sun", results.first().name)
     }
 
     @Test
-    fun `search by meaning`() {
+    fun `search by meaning content`() {
         val results = searchEngine.search(testSymbols, "intellect")
         assertTrue(results.isNotEmpty())
         assertEquals("Mercury", results.first().name)
@@ -63,7 +67,7 @@ class SearchEngineTest {
     }
 
     @Test
-    fun `search Hebrew letter by gematria value keyword`() {
+    fun `search by gematria value keyword`() {
         val results = searchEngine.search(testSymbols, "300")
         assertTrue(results.isNotEmpty())
         assertEquals("Shin", results.first().name)
@@ -71,20 +75,17 @@ class SearchEngineTest {
 
     @Test
     fun `empty query returns empty list`() {
-        val results = searchEngine.search(testSymbols, "")
-        assertTrue(results.isEmpty())
+        assertTrue(searchEngine.search(testSymbols, "").isEmpty())
     }
 
     @Test
     fun `blank query returns empty list`() {
-        val results = searchEngine.search(testSymbols, "   ")
-        assertTrue(results.isEmpty())
+        assertTrue(searchEngine.search(testSymbols, "   ").isEmpty())
     }
 
     @Test
     fun `no match returns empty list`() {
-        val results = searchEngine.search(testSymbols, "xyznonexistent")
-        assertTrue(results.isEmpty())
+        assertTrue(searchEngine.search(testSymbols, "xyznonexistent").isEmpty())
     }
 
     @Test
@@ -99,5 +100,40 @@ class SearchEngineTest {
         val results = searchEngine.search(testSymbols, "U+2609")
         assertTrue(results.isNotEmpty())
         assertEquals("Sun", results.first().name)
+    }
+
+    @Test
+    fun `search alchemical symbol by name`() {
+        val results = searchEngine.search(testSymbols, "sulfur")
+        assertTrue(results.isNotEmpty())
+        assertEquals("Sulfur", results.first().name)
+    }
+
+    @Test
+    fun `search alchemical symbol by keyword`() {
+        val results = searchEngine.search(testSymbols, "crystallization")
+        assertTrue(results.isNotEmpty())
+        assertEquals("Salt", results.first().name)
+    }
+
+    @Test
+    fun `results are ranked - exact match beats partial`() {
+        val results = searchEngine.search(testSymbols, "moon")
+        assertTrue(results.isNotEmpty())
+        // "Moon" exact name match should be first
+        assertEquals("Moon", results.first().name)
+    }
+
+    @Test
+    fun `single character query can return results`() {
+        // SearchEngine allows single char queries - it may match keywords
+        val results = searchEngine.search(testSymbols, "s")
+        // "s" matches "Sun", "Shin", "Salt", "Sulfur" by name start
+        assertTrue(results.isNotEmpty())
+    }
+
+    @Test
+    fun `search with empty symbol list returns empty`() {
+        assertTrue(searchEngine.search(emptyList(), "sun").isEmpty())
     }
 }
