@@ -72,6 +72,11 @@ class HermeticIME : InputMethodService() {
         switchView(view)
     }
 
+    fun switchToNumberSymbols() {
+        val view = layoutManager.createNumberSymbolsView()
+        switchView(view)
+    }
+
     private fun switchView(view: View) {
         setInputView(view)
         currentView = view

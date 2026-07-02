@@ -159,6 +159,9 @@ class QwertyKeyboardView(
                             isBackspaceHeld = true
                             startBackspaceRepeat()
                         } else if (hasAccents(key)) {
+                            // Fire the key IMMEDIATELY for fast typing
+                            handleKeyPress(key)
+                            // Also start long-press timer to show accents
                             longPressHandler.postDelayed({
                                 longPressTriggered = true
                                 showAccentRow(key)
@@ -175,9 +178,8 @@ class QwertyKeyboardView(
                         if (key == "⌫") {
                             isBackspaceHeld = false
                             backspaceHandler.removeCallbacksAndMessages(null)
-                        } else if (hasAccents(key) && !longPressTriggered) {
-                            handleKeyPress(key)
                         }
+                        // No special handling needed on UP — key was already fired on DOWN
                         true
                     }
                     else -> false
@@ -190,7 +192,8 @@ class QwertyKeyboardView(
 
     /**
      * Shows accented characters as an inline overlay row.
-     * No PopupWindow — avoids stealing focus from InputMethodService.
+     * Since the base character was already inserted on ACTION_DOWN,
+     * selecting an accent will replace it (delete 1 + insert accent).
      */
     private fun showAccentRow(key: String) {
         val accents = ACCENT_MAP[key.lowercase()] ?: return
@@ -198,27 +201,24 @@ class QwertyKeyboardView(
 
         accentOverlay.removeAllViews()
 
-        // Add the base character first
-        val baseChar = if (isShifted || isCaps) key.uppercase() else key
-        addAccentButton(baseChar)
+        // Add accented variants (selecting one replaces the already-typed base char)
+        chars.forEach { char -> addAccentButton(char, replaceBase = true) }
 
-        // Add accented variants
-        chars.forEach { char -> addAccentButton(char) }
-
-        // Add close button
+        // Add close button (keep the base char as-is)
         accentOverlay.addView(TextView(context).apply {
             text = "✕"
             gravity = Gravity.CENTER
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             setTextColor(ContextCompat.getColor(context, R.color.on_surface))
             setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8))
+            isFocusable = false
             setOnClickListener { hideAccentRow() }
         })
 
         accentOverlay.visibility = View.VISIBLE
     }
 
-    private fun addAccentButton(char: String) {
+    private fun addAccentButton(char: String, replaceBase: Boolean) {
         accentOverlay.addView(TextView(context).apply {
             text = char
             gravity = Gravity.CENTER
@@ -235,10 +235,17 @@ class QwertyKeyboardView(
             }
             isFocusable = false
             setOnClickListener {
+                if (replaceBase) {
+                    // Delete the base character that was already inserted
+                    onKeyPress("BACKSPACE")
+                    if (currentWord.isNotEmpty()) {
+                        currentWord.deleteCharAt(currentWord.length - 1)
+                    }
+                }
+                // Insert the accented character
                 onKeyPress(char)
                 currentWord.append(char)
                 suggestionBar.updateSuggestions(currentWord.toString())
-                if (isShifted && !isCaps) { isShifted = false; updateLetterCase() }
                 hideAccentRow()
             }
         })
@@ -279,12 +286,12 @@ class QwertyKeyboardView(
             " " -> {
                 onKeyPress(" ")
                 if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
-                currentWord.clear(); suggestionBar.clear()
+                currentWord.clear()
             }
             ",", "." -> {
                 onKeyPress(key)
                 if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
-                currentWord.clear(); suggestionBar.clear()
+                currentWord.clear()
             }
             else -> {
                 val output = if (isShifted || isCaps) key.uppercase() else key

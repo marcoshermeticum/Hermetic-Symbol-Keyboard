@@ -35,7 +35,7 @@ class KeyboardLayoutManager(
                     if (count > 0) ime.deleteBackward(count)
                 }
                 output == "ENTER" -> ime.commitText("\n")
-                output == "SWITCH_TO_SYMBOLS" -> ime.switchToHermeticPanel()
+                output == "SWITCH_TO_SYMBOLS" -> ime.switchToNumberSymbols()
                 output == "SWITCH_TO_HERMETIC" -> ime.switchToHermeticPanel()
                 output == "SWITCH_TO_HEBREW" -> ime.switchToHebrewKeyboard()
                 output == "SWITCH_TO_EMOJI" -> ime.switchToEmojiPanel()
@@ -67,6 +67,17 @@ class KeyboardLayoutManager(
     fun createEmojiPanelView(): View {
         return EmojiPanelView(ime) { emoji ->
             ime.commitText(emoji)
+        }
+    }
+
+    fun createNumberSymbolsView(): View {
+        return NumberSymbolsView(ime) { output ->
+            when (output) {
+                "SWITCH_TO_ALPHA" -> ime.switchToMainKeyboard()
+                "BACKSPACE" -> ime.deleteBackward()
+                "ENTER" -> ime.commitText("\n")
+                else -> ime.commitText(output)
+            }
         }
     }
 
