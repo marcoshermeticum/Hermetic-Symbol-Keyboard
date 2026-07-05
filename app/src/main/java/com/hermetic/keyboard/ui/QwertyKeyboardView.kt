@@ -2,6 +2,9 @@ package com.hermetic.keyboard.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
@@ -16,11 +19,21 @@ import androidx.core.content.ContextCompat
 import com.hermetic.keyboard.R
 
 /**
- * Anatomic QWERTY keyboard layout:
- * - Row 2 (a-l) offset inward for natural finger reach
- * - Row 3 (z-m) narrower, shift/backspace wider
- * - Long-press shift = caps lock
- * - Long-press on accentable keys shows inline accent row
+ * High-performance QWERTY keyboard using Canvas drawing.
+ *
+ * Architecture:
+ * - FrameLayout containing: SuggestionBar (top) + CanvasKeyboard (main) + AccentOverlay
+ * - The CanvasKeyboard is a single flat View that draws all keys via onDraw(canvas)
+ * - Contiguous hitboxes (no dead zones between keys)
+ * - Multi-touch support via ACTION_POINTER_DOWN/UP
+ * - Center-gravity algorithm for edge touches
+ *
+ * Layout (Samsung Galaxy A30s: 720x1560, 280dpi):
+ * - Row heights: 52dp
+ * - Row 1: q-p (10 keys, full width)
+ * - Row 2: a-l (9 keys, indented half-key width each side)
+ * - Row 3: Shift(1.5x) + z,x,c,v,b,n,m + Backspace(1.5x)
+ * - Row 4: ?123(1.2x), 😀(1x), 🎙️(1x), 🔮(1x), Space(3x), .(1x), Enter(1.3x)
  */
 class QwertyKeyboardView(
     context: Context,
@@ -29,24 +42,20 @@ class QwertyKeyboardView(
 
     private var isShifted = false
     private var isCaps = false
-    private val letterKeys = mutableListOf<TextView>()
-    private val longPressHandler = Handler(Looper.getMainLooper())
-    private var longPressTriggered = false
 
     private lateinit var suggestionBar: SuggestionBarView
-    private lateinit var keyboardLayout: LinearLayout
+    private lateinit var canvasKeyboard: CanvasKeyboardView
     private lateinit var accentOverlay: LinearLayout
     private var currentWord = StringBuilder()
 
     init {
         setBackgroundColor(ContextCompat.getColor(context, R.color.background))
-        buildKeyboard()
+        buildLayout()
     }
 
-    private fun buildKeyboard() {
-        keyboardLayout = LinearLayout(context).apply {
+    private fun buildLayout() {
+        val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dpToPx(2), dpToPx(4), dpToPx(2), dpToPx(6))
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
 
@@ -59,26 +68,17 @@ class QwertyKeyboardView(
             currentWord.clear()
             suggestionBar.clear()
         }
-        keyboardLayout.addView(suggestionBar)
+        container.addView(suggestionBar)
 
-        // Row 1: q w e r t y u i o p (full width)
-        keyboardLayout.addView(createRow(
-            listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
-            indent = 0f
-        ))
-        // Row 2: a s d f g h j k l (indented ~half key for anatomic feel)
-        keyboardLayout.addView(createRow(
-            listOf("a", "s", "d", "f", "g", "h", "j", "k", "l"),
-            indent = 0.5f
-        ))
-        // Row 3: SHIFT z x c v b n m ⌫
-        keyboardLayout.addView(createFunctionalRow())
-        // Row 4: 123 😀 🔮 [space] , . ↵
-        keyboardLayout.addView(createBottomRow())
+        // Canvas keyboard
+        canvasKeyboard = CanvasKeyboardView(context) { action ->
+            handleCanvasAction(action)
+        }
+        container.addView(canvasKeyboard)
 
-        addView(keyboardLayout)
+        addView(container)
 
-        // Accent overlay
+        // Accent overlay (drawn on top)
         accentOverlay = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -93,213 +93,63 @@ class QwertyKeyboardView(
         addView(accentOverlay)
     }
 
-    private fun createRow(keys: List<String>, indent: Float): LinearLayout {
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(52)).apply {
-                topMargin = dpToPx(4)
+    private fun handleCanvasAction(action: String) {
+        when {
+            action == "SHIFT_TAP" -> {
+                toggleShift()
+                canvasKeyboard.updateShiftState(isShifted, isCaps)
             }
-            // Indent for anatomic offset
-            if (indent > 0f) {
-                setPadding(dpToPx((indent * 16).toInt()), 0, dpToPx((indent * 16).toInt()), 0)
+            action == "SHIFT_LONG" -> {
+                isCaps = true; isShifted = true
+                canvasKeyboard.updateShiftState(isShifted, isCaps)
             }
-            keys.forEach { key -> addView(createLetterKey(key)) }
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun createFunctionalRow(): LinearLayout {
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(52)).apply {
-                topMargin = dpToPx(4)
+            action == "BACKSPACE" -> {
+                onKeyPress("BACKSPACE")
+                trackBackspace()
             }
-
-            // SHIFT key (wider, with long-press = caps lock)
-            addView(createShiftKey())
-
-            // Letter keys z-m
-            listOf("z", "x", "c", "v", "b", "n", "m").forEach { key ->
-                addView(createLetterKey(key))
+            action == "BACKSPACE_WORD" -> {
+                onKeyPress("BACKSPACE")
+                trackBackspace()
             }
-
-            // Backspace (wider, with long-press repeat)
-            addView(createBackspaceKey())
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun createShiftKey(): TextView {
-        return TextView(context).apply {
-            text = "⇧"
-            gravity = Gravity.CENTER
-            setTextColor(ContextCompat.getColor(context, R.color.key_text))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-            setBackgroundResource(R.drawable.key_background)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.6f).apply {
-                marginStart = dpToPx(3); marginEnd = dpToPx(3)
+            action.startsWith("ACCENT_") -> {
+                val baseKey = action.removePrefix("ACCENT_")
+                showAccentRow(baseKey)
             }
-            isFocusable = false; isClickable = true
-
-            val shiftLongPressHandler = Handler(Looper.getMainLooper())
-            var shiftLongPressed = false
-
-            setOnTouchListener { v, event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        v.isPressed = true
-                        v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                        shiftLongPressed = false
-                        // Long-press = caps lock
-                        shiftLongPressHandler.postDelayed({
-                            shiftLongPressed = true
-                            isCaps = true; isShifted = true
-                            updateLetterCase()
-                            (v as TextView).text = "⇪"
-                            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                        }, 500)
-                        true
-                    }
-                    MotionEvent.ACTION_UP -> {
-                        v.isPressed = false
-                        shiftLongPressHandler.removeCallbacksAndMessages(null)
-                        if (!shiftLongPressed) {
-                            // Short tap: toggle shift
-                            toggleShift()
-                            (v as TextView).text = if (isCaps) "⇪" else if (isShifted) "⬆" else "⇧"
-                        }
-                        true
-                    }
-                    MotionEvent.ACTION_CANCEL -> {
-                        v.isPressed = false
-                        shiftLongPressHandler.removeCallbacksAndMessages(null)
-                        true
-                    }
-                    else -> false
+            action == "SWITCH_TO_SYMBOLS" -> onKeyPress("SWITCH_TO_SYMBOLS")
+            action == "SWITCH_TO_EMOJI" -> onKeyPress("SWITCH_TO_EMOJI")
+            action == "SWITCH_TO_HERMETIC" -> onKeyPress("SWITCH_TO_HERMETIC")
+            action == "VOICE_INPUT" -> {
+                // Placeholder: show toast "Em breve"
+                android.widget.Toast.makeText(context, "Em breve", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            action == "ENTER" -> {
+                onKeyPress("ENTER")
+                if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
+                currentWord.clear()
+            }
+            action == "SPACE" -> {
+                onKeyPress(" ")
+                if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
+                currentWord.clear()
+            }
+            action == "." -> {
+                onKeyPress(".")
+                if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
+                currentWord.clear()
+            }
+            else -> {
+                // Regular letter
+                val output = if (isShifted || isCaps) action.uppercase() else action
+                onKeyPress(output)
+                currentWord.append(output)
+                suggestionBar.updateSuggestions(currentWord.toString())
+                if (isShifted && !isCaps) {
+                    isShifted = false
+                    canvasKeyboard.updateShiftState(isShifted, isCaps)
                 }
             }
         }
     }
-
-    private fun createBackspaceKey(): TextView {
-        val tv = TextView(context).apply {
-            text = "⌫"
-            gravity = Gravity.CENTER
-            setTextColor(ContextCompat.getColor(context, R.color.key_text))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-            setBackgroundResource(R.drawable.key_background)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.6f).apply {
-                marginStart = dpToPx(3); marginEnd = dpToPx(3)
-            }
-            isFocusable = false; isClickable = true
-        }
-        BackspaceHelper.attach(tv) {
-            onKeyPress("BACKSPACE")
-            trackBackspace()
-        }
-        return tv
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun createBottomRow(): LinearLayout {
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(52)).apply {
-                topMargin = dpToPx(4)
-            }
-
-            // ?123
-            addView(makeSpecialKey("?123", 1.3f) { onKeyPress("SWITCH_TO_SYMBOLS") })
-            // 😀
-            addView(makeSpecialKey("😀", 1f) { onKeyPress("SWITCH_TO_EMOJI") })
-            // 🔮
-            addView(makeSpecialKey("🔮", 1f) { onKeyPress("SWITCH_TO_HERMETIC") })
-            // Space
-            addView(makeSpecialKey("", 3.5f) { handleKeyPress(" ") })
-            // Comma
-            addView(makeSpecialKey(",", 0.8f) { handleKeyPress(",") })
-            // Period
-            addView(makeSpecialKey(".", 0.8f) { handleKeyPress(".") })
-            // Enter
-            addView(makeSpecialKey("↵", 1.3f) { handleKeyPress("↵") })
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun makeSpecialKey(label: String, weight: Float, action: () -> Unit): TextView {
-        return TextView(context).apply {
-            text = label
-            gravity = Gravity.CENTER
-            setTextColor(ContextCompat.getColor(context, R.color.key_text))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
-            setBackgroundResource(R.drawable.key_background)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, weight).apply {
-                marginStart = dpToPx(3); marginEnd = dpToPx(3)
-            }
-            isFocusable = false; isClickable = true
-            setOnTouchListener { v, event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        v.isPressed = true
-                        v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                        action(); true
-                    }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { v.isPressed = false; true }
-                    else -> false
-                }
-            }
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun createLetterKey(key: String): TextView {
-        return TextView(context).apply {
-            text = if (isShifted || isCaps) key.uppercase() else key
-            gravity = Gravity.CENTER
-            setTextColor(ContextCompat.getColor(context, R.color.key_text))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 21f)
-            setBackgroundResource(R.drawable.key_background)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f).apply {
-                marginStart = dpToPx(3); marginEnd = dpToPx(3)
-            }
-            minimumHeight = dpToPx(48)
-            isFocusable = false; isFocusableInTouchMode = false
-            isClickable = true; isHapticFeedbackEnabled = true
-
-            letterKeys.add(this)
-
-            setOnTouchListener { v, event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        v.isPressed = true
-                        v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                        longPressTriggered = false
-                        // Always fire immediately
-                        handleKeyPress(key)
-                        // Start long-press for accents if available
-                        if (hasAccents(key)) {
-                            longPressHandler.postDelayed({
-                                longPressTriggered = true
-                                showAccentRow(key)
-                            }, 400)
-                        }
-                        true
-                    }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        v.isPressed = false
-                        longPressHandler.removeCallbacksAndMessages(null)
-                        true
-                    }
-                    else -> false
-                }
-            }
-        }
-    }
-
-    private fun hasAccents(key: String): Boolean = ACCENT_MAP.containsKey(key.lowercase())
 
     private fun showAccentRow(key: String) {
         val accents = ACCENT_MAP[key.lowercase()] ?: return
@@ -314,7 +164,10 @@ class QwertyKeyboardView(
                 setTextColor(ContextCompat.getColor(context, R.color.on_background))
                 setBackgroundResource(R.drawable.key_background)
                 setPadding(dpToPx(14), dpToPx(8), dpToPx(14), dpToPx(8))
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
                     marginStart = dpToPx(3); marginEnd = dpToPx(3)
                 }
                 isFocusable = false
@@ -345,36 +198,6 @@ class QwertyKeyboardView(
 
     private fun hideAccentRow() {
         accentOverlay.visibility = View.GONE
-        longPressTriggered = false
-    }
-
-    private fun handleKeyPress(key: String) {
-        if (accentOverlay.visibility == View.VISIBLE) hideAccentRow()
-
-        when (key) {
-            "↵" -> {
-                onKeyPress("ENTER")
-                if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
-                currentWord.clear()
-            }
-            " " -> {
-                onKeyPress(" ")
-                if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
-                currentWord.clear()
-            }
-            ",", "." -> {
-                onKeyPress(key)
-                if (currentWord.isNotEmpty()) suggestionBar.onWordCompleted(currentWord.toString())
-                currentWord.clear()
-            }
-            else -> {
-                val output = if (isShifted || isCaps) key.uppercase() else key
-                onKeyPress(output)
-                currentWord.append(output)
-                suggestionBar.updateSuggestions(currentWord.toString())
-                if (isShifted && !isCaps) { isShifted = false; updateLetterCase() }
-            }
-        }
     }
 
     private fun trackBackspace() {
@@ -388,15 +211,8 @@ class QwertyKeyboardView(
     private fun toggleShift() {
         when {
             !isShifted && !isCaps -> isShifted = true
-            isShifted && !isCaps -> { isShifted = false }
+            isShifted && !isCaps -> isShifted = false
             isCaps -> { isCaps = false; isShifted = false }
-        }
-        updateLetterCase()
-    }
-
-    private fun updateLetterCase() {
-        letterKeys.forEach { tv ->
-            tv.text = if (isShifted || isCaps) tv.text.toString().uppercase() else tv.text.toString().lowercase()
         }
     }
 
@@ -416,4 +232,402 @@ class QwertyKeyboardView(
             "y" to listOf("ý", "ÿ")
         )
     }
+}
+
+// ============================================================================
+// CanvasKeyboardView - Single flat View that draws all keys via Canvas
+// ============================================================================
+
+/**
+ * A single flat View that paints all keyboard keys using Canvas.
+ *
+ * Benefits:
+ * - No nested views (LinearLayouts/TextViews) for maximum performance
+ * - Contiguous hitboxes with no dead zones between keys
+ * - Multi-touch support via ACTION_POINTER_DOWN/UP
+ * - Center-gravity algorithm for edge touches
+ */
+class CanvasKeyboardView(
+    context: Context,
+    private val onAction: (String) -> Unit
+) : View(context) {
+
+    // Key data model
+    data class KeyData(
+        val label: String,
+        val action: String,
+        val rect: RectF = RectF(),
+        var isPressed: Boolean = false,
+        val isSpecial: Boolean = false,
+        val textSizeSp: Float = 20f
+    )
+
+    // Layout definition: rows with (label, action, weight)
+    private data class KeyDef(val label: String, val action: String, val weight: Float, val isSpecial: Boolean = false)
+
+    // Row definitions
+    private val rowDefs = listOf(
+        // Row 1: q-p
+        listOf(
+            KeyDef("q", "q", 1f), KeyDef("w", "w", 1f), KeyDef("e", "e", 1f),
+            KeyDef("r", "r", 1f), KeyDef("t", "t", 1f), KeyDef("y", "y", 1f),
+            KeyDef("u", "u", 1f), KeyDef("i", "i", 1f), KeyDef("o", "o", 1f),
+            KeyDef("p", "p", 1f)
+        ),
+        // Row 2: a-l (indented)
+        listOf(
+            KeyDef("a", "a", 1f), KeyDef("s", "s", 1f), KeyDef("d", "d", 1f),
+            KeyDef("f", "f", 1f), KeyDef("g", "g", 1f), KeyDef("h", "h", 1f),
+            KeyDef("j", "j", 1f), KeyDef("k", "k", 1f), KeyDef("l", "l", 1f)
+        ),
+        // Row 3: Shift + z-m + Backspace
+        listOf(
+            KeyDef("⇧", "SHIFT", 1.5f, true),
+            KeyDef("z", "z", 1f), KeyDef("x", "x", 1f), KeyDef("c", "c", 1f),
+            KeyDef("v", "v", 1f), KeyDef("b", "b", 1f), KeyDef("n", "n", 1f),
+            KeyDef("m", "m", 1f),
+            KeyDef("⌫", "BACKSPACE", 1.5f, true)
+        ),
+        // Row 4: ?123, 😀, 🎙️, 🔮, Space, ., Enter
+        listOf(
+            KeyDef("?123", "SWITCH_TO_SYMBOLS", 1.2f, true),
+            KeyDef("😀", "SWITCH_TO_EMOJI", 1f, true),
+            KeyDef("🎙️", "VOICE_INPUT", 1f, true),
+            KeyDef("🔮", "SWITCH_TO_HERMETIC", 1f, true),
+            KeyDef("", "SPACE", 3f, true),
+            KeyDef(".", ".", 1f, true),
+            KeyDef("↵", "ENTER", 1.3f, true)
+        )
+    )
+
+    // Flattened key list (computed after layout)
+    private val keys = mutableListOf<KeyData>()
+
+    // Paints
+    private val keyBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.key_background)
+        style = Paint.Style.FILL
+    }
+    private val keyBgPressedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.key_background_pressed)
+        style = Paint.Style.FILL
+    }
+    private val keyBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.key_border)
+        style = Paint.Style.STROKE
+        strokeWidth = dpToPx(1).toFloat()
+    }
+    private val keyTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = ContextCompat.getColor(context, R.color.key_text)
+        textAlign = Paint.Align.CENTER
+    }
+
+    // Layout constants
+    private val rowHeightDp = 52
+    private val rowSpacingDp = 4
+    private val keyPaddingDp = 2
+    private val cornerRadiusDp = 6
+    private val numRows = 4
+
+    // Multi-touch tracking: pointerId -> keyIndex
+    private val pointerKeyMap = mutableMapOf<Int, Int>()
+
+    // Long-press handling
+    private val longPressHandler = Handler(Looper.getMainLooper())
+    private val longPressRunnables = mutableMapOf<Int, Runnable>()
+
+    // Backspace repeat
+    private val backspaceHandler = Handler(Looper.getMainLooper())
+    private var backspaceHeld = false
+    private var backspaceHoldStart = 0L
+    private var backspaceWordMode = false
+    private val backspaceRepeater = object : Runnable {
+        override fun run() {
+            if (!backspaceHeld) return
+            val elapsed = System.currentTimeMillis() - backspaceHoldStart
+            if (elapsed >= 1000L && !backspaceWordMode) {
+                backspaceWordMode = true
+            }
+            onAction("BACKSPACE")
+            val delay = if (backspaceWordMode) 80L else 50L
+            backspaceHandler.postDelayed(this, delay)
+        }
+    }
+
+    // Shift state
+    private var isShifted = false
+    private var isCaps = false
+
+    init {
+        isFocusable = false
+        isClickable = true
+    }
+
+    fun updateShiftState(shifted: Boolean, caps: Boolean) {
+        isShifted = shifted
+        isCaps = caps
+        // Update key labels
+        keys.forEach { key ->
+            if (key.action.length == 1 && key.action[0].isLetter()) {
+                // This is a letter key - no direct label storage update needed,
+                // we handle it in onDraw
+            }
+            if (key.action == "SHIFT") {
+                // Update shift icon label reference in onDraw
+            }
+        }
+        invalidate()
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        val totalHeight = dpToPx(rowHeightDp) * numRows + dpToPx(rowSpacingDp) * (numRows + 1)
+        setMeasuredDimension(width, totalHeight)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        computeKeyRects(w, h)
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun computeKeyRects(viewWidth: Int, viewHeight: Int) {
+        keys.clear()
+        val rowHeight = dpToPx(rowHeightDp).toFloat()
+        val rowSpacing = dpToPx(rowSpacingDp).toFloat()
+        val keyPadding = dpToPx(keyPaddingDp).toFloat()
+        val halfKeyWidth = viewWidth.toFloat() / 20f // half of a standard key in row 1
+
+        var y = rowSpacing
+
+        rowDefs.forEachIndexed { rowIndex, rowKeys ->
+            val totalWeight = rowKeys.sumOf { it.weight.toDouble() }.toFloat()
+
+            // Calculate row indent for row 2
+            val indent = if (rowIndex == 1) halfKeyWidth else 0f
+            val availableWidth = viewWidth.toFloat() - (indent * 2f)
+
+            var x = indent
+
+            rowKeys.forEach { keyDef ->
+                val keyWidth = (keyDef.weight / totalWeight) * availableWidth
+                val rect = RectF(
+                    x + keyPadding,
+                    y + keyPadding,
+                    x + keyWidth - keyPadding,
+                    y + rowHeight - keyPadding
+                )
+
+                val textSize = if (keyDef.isSpecial) 16f else 20f
+
+                keys.add(KeyData(
+                    label = keyDef.label,
+                    action = keyDef.action,
+                    rect = rect,
+                    isSpecial = keyDef.isSpecial,
+                    textSizeSp = textSize
+                ))
+
+                x += keyWidth
+            }
+
+            y += rowHeight + rowSpacing
+        }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val cornerRadius = dpToPx(cornerRadiusDp).toFloat()
+
+        keys.forEach { key ->
+            // Background
+            val bgPaint = if (key.isPressed) keyBgPressedPaint else keyBgPaint
+            canvas.drawRoundRect(key.rect, cornerRadius, cornerRadius, bgPaint)
+
+            // Border
+            canvas.drawRoundRect(key.rect, cornerRadius, cornerRadius, keyBorderPaint)
+
+            // Text
+            val displayLabel = getDisplayLabel(key)
+            keyTextPaint.textSize = spToPx(key.textSizeSp)
+            val textX = key.rect.centerX()
+            val textY = key.rect.centerY() - (keyTextPaint.descent() + keyTextPaint.ascent()) / 2f
+            canvas.drawText(displayLabel, textX, textY, keyTextPaint)
+        }
+    }
+
+    private fun getDisplayLabel(key: KeyData): String {
+        return when {
+            key.action == "SHIFT" -> when {
+                isCaps -> "⇪"
+                isShifted -> "⬆"
+                else -> "⇧"
+            }
+            key.action.length == 1 && key.action[0].isLetter() -> {
+                if (isShifted || isCaps) key.label.uppercase() else key.label
+            }
+            else -> key.label
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val pointerIndex = event.actionIndex
+        val pointerId = event.getPointerId(pointerIndex)
+        val x = event.getX(pointerIndex)
+        val y = event.getY(pointerIndex)
+
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                val keyIndex = findKeyAt(x, y)
+                if (keyIndex >= 0) {
+                    pointerKeyMap[pointerId] = keyIndex
+                    keys[keyIndex].isPressed = true
+                    invalidate()
+
+                    performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+
+                    val key = keys[keyIndex]
+                    when (key.action) {
+                        "BACKSPACE" -> {
+                            onAction("BACKSPACE")
+                            backspaceHeld = true
+                            backspaceWordMode = false
+                            backspaceHoldStart = System.currentTimeMillis()
+                            backspaceHandler.postDelayed(backspaceRepeater, 300)
+                        }
+                        "SHIFT" -> {
+                            // Start long-press detection for caps lock
+                            val runnable = Runnable {
+                                onAction("SHIFT_LONG")
+                                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                longPressRunnables.remove(pointerId)
+                            }
+                            longPressRunnables[pointerId] = runnable
+                            longPressHandler.postDelayed(runnable, 500)
+                        }
+                        else -> {
+                            // Fire immediately for all other keys
+                            fireKeyAction(key)
+                            // Start long-press for accent if applicable
+                            if (key.action.length == 1 && hasAccents(key.action)) {
+                                val runnable = Runnable {
+                                    onAction("ACCENT_${key.action}")
+                                    longPressRunnables.remove(pointerId)
+                                }
+                                longPressRunnables[pointerId] = runnable
+                                longPressHandler.postDelayed(runnable, 400)
+                            }
+                        }
+                    }
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                val keyIndex = pointerKeyMap.remove(pointerId)
+                if (keyIndex != null && keyIndex < keys.size) {
+                    keys[keyIndex].isPressed = false
+                    invalidate()
+
+                    val key = keys[keyIndex]
+                    if (key.action == "BACKSPACE") {
+                        backspaceHeld = false
+                        backspaceWordMode = false
+                        backspaceHandler.removeCallbacksAndMessages(null)
+                    }
+                    if (key.action == "SHIFT") {
+                        val runnable = longPressRunnables.remove(pointerId)
+                        if (runnable != null) {
+                            // Long press didn't fire yet = short tap
+                            longPressHandler.removeCallbacks(runnable)
+                            onAction("SHIFT_TAP")
+                        }
+                        // If runnable is null, long press already fired
+                    }
+                }
+                // Cancel any long-press for this pointer
+                longPressRunnables.remove(pointerId)?.let {
+                    longPressHandler.removeCallbacks(it)
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_CANCEL -> {
+                // Release all pointers
+                pointerKeyMap.values.forEach { idx ->
+                    if (idx < keys.size) keys[idx].isPressed = false
+                }
+                pointerKeyMap.clear()
+                longPressRunnables.clear()
+                longPressHandler.removeCallbacksAndMessages(null)
+                backspaceHeld = false
+                backspaceWordMode = false
+                backspaceHandler.removeCallbacksAndMessages(null)
+                invalidate()
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                // Ignore moves (no swipe for now)
+                return true
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+
+    /**
+     * Find which key was hit using center-gravity distance algorithm.
+     * Returns key index or -1 if none found.
+     */
+    private fun findKeyAt(touchX: Float, touchY: Float): Int {
+        // First try exact hit
+        keys.forEachIndexed { index, key ->
+            if (key.rect.contains(touchX, touchY)) return index
+        }
+
+        // Center-gravity: find nearest key center for edge touches
+        var minDist = Float.MAX_VALUE
+        var nearest = -1
+        keys.forEachIndexed { index, key ->
+            val dx = touchX - key.rect.centerX()
+            val dy = touchY - key.rect.centerY()
+            val dist = dx * dx + dy * dy
+            if (dist < minDist) {
+                minDist = dist
+                nearest = index
+            }
+        }
+
+        // Only accept if within reasonable distance (1.5x key height)
+        val maxDist = dpToPx(rowHeightDp) * 1.5f
+        return if (minDist < maxDist * maxDist) nearest else -1
+    }
+
+    private fun fireKeyAction(key: KeyData) {
+        when (key.action) {
+            "SWITCH_TO_SYMBOLS" -> onAction("SWITCH_TO_SYMBOLS")
+            "SWITCH_TO_EMOJI" -> onAction("SWITCH_TO_EMOJI")
+            "SWITCH_TO_HERMETIC" -> onAction("SWITCH_TO_HERMETIC")
+            "VOICE_INPUT" -> onAction("VOICE_INPUT")
+            "SPACE" -> onAction("SPACE")
+            "ENTER" -> onAction("ENTER")
+            "." -> onAction(".")
+            else -> {
+                // Letter key
+                if (key.action.length == 1) {
+                    onAction(key.action)
+                }
+            }
+        }
+    }
+
+    private fun hasAccents(key: String): Boolean =
+        QwertyKeyboardView.ACCENT_MAP.containsKey(key.lowercase())
+
+    private fun dpToPx(dp: Int): Int =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), context.resources.displayMetrics).toInt()
+
+    private fun spToPx(sp: Float): Float =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, context.resources.displayMetrics)
 }

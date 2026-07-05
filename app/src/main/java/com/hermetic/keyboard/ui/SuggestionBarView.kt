@@ -8,6 +8,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.hermetic.keyboard.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Context-aware prediction bar that suggests next words based on:
@@ -16,6 +21,11 @@ import com.hermetic.keyboard.R
  * 3. User learning: tracks word frequency from usage
  *
  * Suggestions appear even before the user types, based on context.
+ *
+ * Performance:
+ * - All dictionary/Levenshtein work runs on Dispatchers.Default coroutine
+ * - UI updates on Dispatchers.Main
+ * - Center slot (index 1) gets accent color background for primary correction
  */
 class SuggestionBarView(
     context: Context,
@@ -25,6 +35,8 @@ class SuggestionBarView(
     private val suggestionViews = mutableListOf<TextView>()
     private val wordHistory = mutableListOf<String>() // last N words typed
     private val prefs: SharedPreferences = context.getSharedPreferences("hermetic_predictions", Context.MODE_PRIVATE)
+    private val scope = CoroutineScope(Dispatchers.Main)
+    private var currentJob: Job? = null
 
     init {
         orientation = HORIZONTAL
@@ -33,7 +45,7 @@ class SuggestionBarView(
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, dpToPx(38))
         setPadding(dpToPx(4), 0, dpToPx(4), 0)
 
-        repeat(3) { _ ->
+        repeat(3) { index ->
             val tv = TextView(context).apply {
                 gravity = Gravity.CENTER
                 setTextColor(ContextCompat.getColor(context, R.color.on_background))
@@ -43,6 +55,12 @@ class SuggestionBarView(
                 }
                 isClickable = true; isFocusable = false
                 setBackgroundResource(R.drawable.key_background)
+
+                // Center slot (index 1) gets accent color background for primary correction
+                if (index == 1) {
+                    setBackgroundColor(ContextCompat.getColor(context, R.color.accent))
+                }
+
                 setOnClickListener {
                     val word = text?.toString() ?: ""
                     if (word.isNotEmpty()) onSuggestionSelected(word)
@@ -55,14 +73,20 @@ class SuggestionBarView(
 
     /**
      * Called when user is typing. Shows predictions filtered by prefix.
+     * Computation is offloaded to Dispatchers.Default.
      */
     fun updateSuggestions(currentPrefix: String) {
-        val suggestions = if (currentPrefix.isEmpty()) {
-            getNextWordPredictions()
-        } else {
-            getPrefixSuggestions(currentPrefix)
+        currentJob?.cancel()
+        currentJob = scope.launch {
+            val suggestions = withContext(Dispatchers.Default) {
+                if (currentPrefix.isEmpty()) {
+                    getNextWordPredictions()
+                } else {
+                    getPrefixSuggestions(currentPrefix)
+                }
+            }
+            displaySuggestions(suggestions)
         }
-        displaySuggestions(suggestions)
     }
 
     /**
@@ -77,11 +101,18 @@ class SuggestionBarView(
             learnWord(clean)
             learnBigram()
         }
-        // Show next-word predictions immediately
-        displaySuggestions(getNextWordPredictions())
+        // Show next-word predictions immediately (offloaded)
+        currentJob?.cancel()
+        currentJob = scope.launch {
+            val suggestions = withContext(Dispatchers.Default) {
+                getNextWordPredictions()
+            }
+            displaySuggestions(suggestions)
+        }
     }
 
     fun clear() {
+        currentJob?.cancel()
         suggestionViews.forEach { it.text = "" }
     }
 

@@ -6,6 +6,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import android.view.inputmethod.InputConnection
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -13,7 +14,8 @@ import com.hermetic.keyboard.R
 
 /**
  * Number and special characters keyboard.
- * Backspace supports long-press repeat via BackspaceHelper.
+ * Backspace supports long-press repeat via BackspaceHelper with word-delete after 1s.
+ * All touch handlers fire on ACTION_DOWN for immediate response.
  */
 class NumberSymbolsView(
     context: Context,
@@ -21,6 +23,12 @@ class NumberSymbolsView(
 ) : LinearLayout(context) {
 
     private var page = 0
+
+    /**
+     * Optional InputConnection provider for word-deletion support.
+     * Set by the parent (HermeticIME via KeyboardLayoutManager) if available.
+     */
+    var inputConnectionProvider: (() -> InputConnection?)? = null
 
     init {
         orientation = VERTICAL
@@ -66,10 +74,13 @@ class NumberSymbolsView(
                     isFocusable = false; isClickable = true
                 }
 
-                // Backspace gets long-press repeat
+                // Backspace gets long-press repeat with word-delete support
                 if (key == "⌫") {
-                    BackspaceHelper.attach(tv) { onKeyPress("BACKSPACE") }
+                    BackspaceHelper.attach(tv, inputConnectionProvider) {
+                        onKeyPress("BACKSPACE")
+                    }
                 } else {
+                    // All other keys fire on ACTION_DOWN
                     tv.setOnTouchListener { v, event ->
                         when (event.action) {
                             MotionEvent.ACTION_DOWN -> {

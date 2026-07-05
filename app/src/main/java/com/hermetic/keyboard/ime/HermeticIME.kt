@@ -3,6 +3,7 @@ package com.hermetic.keyboard.ime
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.Toast
 import com.hermetic.keyboard.symbols.data.SymbolDatabase
 import com.hermetic.keyboard.symbols.data.SymbolDataProvider
 import com.hermetic.keyboard.symbols.repository.SymbolRepository
@@ -11,14 +12,17 @@ import com.hermetic.keyboard.ui.KeyboardLayoutManager
 
 /**
  * Main InputMethodService for the Hermetic Symbol Keyboard.
+ *
+ * Architecture:
+ * - onCreateInputView returns a FrameLayout container with all views pre-loaded
+ * - switchTo* methods just toggle visibility (no removeView/addView)
+ * - Uses KeyboardLayoutManager's ViewCache for instant switching
  */
 class HermeticIME : InputMethodService() {
 
     private lateinit var repository: SymbolRepository
     private lateinit var searchEngine: SearchEngine
     private lateinit var layoutManager: KeyboardLayoutManager
-
-    private var currentView: View? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -27,12 +31,14 @@ class HermeticIME : InputMethodService() {
         repository = SymbolRepository(dataProvider, db.favoriteDao(), db.recentDao())
         searchEngine = SearchEngine()
         layoutManager = KeyboardLayoutManager(this, repository, searchEngine)
+
+        // Pre-instantiate all views in the ViewCache
+        layoutManager.initViewCache()
     }
 
     override fun onCreateInputView(): View {
-        val view = layoutManager.createMainKeyboardView()
-        currentView = view
-        return view
+        // Return the FrameLayout container with all views pre-loaded
+        return layoutManager.getContainerView()
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
@@ -53,33 +59,27 @@ class HermeticIME : InputMethodService() {
     }
 
     fun switchToHermeticPanel() {
-        val view = layoutManager.createHermeticPanelView()
-        switchView(view)
+        layoutManager.switchToHermetic()
     }
 
     fun switchToHebrewKeyboard() {
-        val view = layoutManager.createHebrewKeyboardView()
-        switchView(view)
+        layoutManager.switchToHebrew()
     }
 
     fun switchToMainKeyboard() {
-        val view = layoutManager.createMainKeyboardView()
-        switchView(view)
+        layoutManager.switchToMain()
     }
 
     fun switchToEmojiPanel() {
-        val view = layoutManager.createEmojiPanelView()
-        switchView(view)
+        layoutManager.switchToEmoji()
     }
 
     fun switchToNumberSymbols() {
-        val view = layoutManager.createNumberSymbolsView()
-        switchView(view)
+        layoutManager.switchToNumberSymbols()
     }
 
-    private fun switchView(view: View) {
-        setInputView(view)
-        currentView = view
-        KeyboardLayoutManager.applyTransitionAnimation(view)
+    fun switchToVoiceInput() {
+        // Placeholder: mic icon present but shows toast "Em breve" for now
+        Toast.makeText(this, "Em breve", Toast.LENGTH_SHORT).show()
     }
 }
